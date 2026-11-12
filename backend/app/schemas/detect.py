@@ -22,6 +22,7 @@ class ModelCoverage(BaseModel):
     ensemble_supported: bool = True
     unsupported_reason: Optional[str] = None
     compatibility_decision: Optional[str] = None
+    coverage_type: str = "full"
 
 
 class DetectedObject(BaseModel):

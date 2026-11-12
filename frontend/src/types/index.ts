@@ -44,11 +44,11 @@ export interface PredictResponse {
   filename: string;
   original_filename?: string;
   image_path?: string;
-  predicted_category: WasteCategory;
+  predicted_category: WasteCategoryV2;
   confidence: number;
   calibrated_confidence?: number;
-  vit_prediction: WasteCategory;
-  clip_prediction: WasteCategory;
+  vit_prediction: string;
+  clip_prediction: string;
   class_probabilities: ClassProbabilities;
   calibrated_probabilities?: ClassProbabilities;
   vit_probabilities?: ClassProbabilities;
@@ -60,6 +60,8 @@ export interface PredictResponse {
   ood_warning?: string | null;
   recycling_recommendation: string;
   recycling_decision?: RecyclingDecision;
+  model_agreement?: boolean | null;
+  model_coverage?: ModelCoverage | null;
   model_version: string;
   created_at: string;
 }
@@ -77,6 +79,7 @@ export interface ModelCoverage {
   ensemble_supported: boolean;
   unsupported_reason?: string | null;
   compatibility_decision?: string | null;
+  coverage_type?: 'full' | 'partial' | null;
 }
 
 export interface DetectedObject {

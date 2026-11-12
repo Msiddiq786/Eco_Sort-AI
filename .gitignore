@@ -27,6 +27,7 @@ backend/models/detection_v2/weights/
 *.weights
 backend/data/
 backend/uploads/
+uploads/
 backend/evaluation/results/
 backend/*.db
 backend/*.sqlite3

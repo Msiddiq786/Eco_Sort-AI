@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { PredictResponse, WasteCategory } from '@/types'
+import type { PredictResponse } from '@/types'
 import { capitalize, CATEGORY_COLORS } from '@/lib/utils'
 import {
   Recycle,
@@ -80,18 +80,22 @@ export default function ResultCard({ result, imageUrl }: Props) {
 
   // Ranked probability breakdown (sorted descending)
   const rankedProbabilities = useMemo(() => {
-    const entries = Object.entries(result.class_probabilities) as [WasteCategory, number][]
-    return entries.sort((a, b) => b[1] - a[1])
+    const entries = Object.entries(result.class_probabilities) as [string, number][]
+    return entries.filter(([_, prob]) => typeof prob === 'number' && !isNaN(prob)).sort((a, b) => b[1] - a[1])
   }, [result.class_probabilities])
+
+  // ViT coverage check
+  const isVitSupported = result.model_coverage?.vit_supported !== false && !result.vit_prediction?.toLowerCase().includes('not supported')
 
   // Individual model top probabilities (if provided in API or derived)
   const vitTopProb = useMemo(() => {
+    if (!isVitSupported) return 'N/A'
     if (result.vit_probabilities && result.vit_prediction) {
       const p = result.vit_probabilities[result.vit_prediction as keyof typeof result.vit_probabilities]
       if (typeof p === 'number') return p.toFixed(2)
     }
     return (rawConfidence * 0.95).toFixed(2)
-  }, [result, rawConfidence])
+  }, [result, rawConfidence, isVitSupported])
 
   const clipTopProb = useMemo(() => {
     if (result.clip_probabilities && result.clip_prediction) {
@@ -101,8 +105,13 @@ export default function ResultCard({ result, imageUrl }: Props) {
     return (rawConfidence * 0.78).toFixed(2)
   }, [result, rawConfidence])
 
-  // Model agreement status
-  const modelsAgree = result.vit_prediction?.toLowerCase() === result.clip_prediction?.toLowerCase()
+  // Model agreement status (prevent false consensus when coverage is incomplete)
+  const isPartialCoverage = !isVitSupported || result.model_coverage?.coverage_type === 'partial'
+  const modelsAgree = Boolean(
+    !isPartialCoverage &&
+    result.model_agreement !== false &&
+    result.vit_prediction?.toLowerCase() === result.clip_prediction?.toLowerCase()
+  )
 
   // Confidence status badge content
   let statusBadge = {
@@ -119,6 +128,14 @@ export default function ResultCard({ result, imageUrl }: Props) {
       textColor: 'text-rose-800',
       borderColor: 'border-rose-200',
       icon: AlertTriangle,
+    }
+  } else if (result.predicted_category === 'organic' && isPartialCoverage) {
+    statusBadge = {
+      label: 'CLIP V2 Foundation Validated',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-800',
+      borderColor: 'border-emerald-200',
+      icon: Sparkles,
     }
   } else if (isModerate || isLow) {
     statusBadge = {
@@ -271,14 +288,14 @@ export default function ResultCard({ result, imageUrl }: Props) {
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5 flex flex-col justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 mb-2">
               <Cpu className="h-4 w-4 text-emerald-600" />
-              <span>ViT Model (70% weight)</span>
+              <span>{isVitSupported ? 'ViT Model (70% weight)' : 'ViT Model (6-Class V1)'}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-base font-heading font-bold text-slate-900">
-                {capitalize(result.vit_prediction)}
+              <span className={`text-base font-heading font-bold ${isVitSupported ? 'text-slate-900' : 'text-slate-500 text-sm'}`}>
+                {isVitSupported ? capitalize(result.vit_prediction) : 'Not supported (V1 6-class)'}
               </span>
               <span className="px-2 py-0.5 rounded-md bg-emerald-100/80 text-emerald-800 text-xs font-mono font-semibold">
-                P = {vitTopProb}
+                {isVitSupported ? `P = ${vitTopProb}` : 'N/A'}
               </span>
             </div>
           </div>
@@ -287,7 +304,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
           <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5 flex flex-col justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-blue-900 mb-2">
               <Layers className="h-4 w-4 text-blue-600" />
-              <span>CLIP Foundation (30% weight)</span>
+              <span>CLIP Foundation (V2 7-Class)</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-base font-heading font-bold text-slate-900">
@@ -299,8 +316,30 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
           </div>
 
-          {/* Card 3: Agreement / Disagreement Banner */}
-          {modelsAgree ? (
+          {/* Card 3: Agreement / Disagreement / Partial Coverage Banner */}
+          {isPartialCoverage ? (
+            result.predicted_category === 'organic' ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 text-emerald-800 font-heading font-bold text-sm">
+                  <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>Partial Model Coverage</span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Classified as <strong className="text-slate-800">Organic</strong> via CLIP V2 foundation model (ViT V1 lacks Organic taxonomy).
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 text-amber-800 font-heading font-bold text-sm">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>Verification Required</span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Single-model organic evidence requires manual inspection before disposal.
+                </p>
+              </div>
+            )
+          ) : modelsAgree ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 flex flex-col justify-center">
               <div className="flex items-center gap-1.5 text-emerald-800 font-heading font-bold text-sm">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -318,7 +357,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
                 <span>Model Disagreement</span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                ViT and CLIP predict different categories.
+                ViT predicts {capitalize(result.vit_prediction)} while CLIP predicts {capitalize(result.clip_prediction)}.
               </p>
             </div>
           )}

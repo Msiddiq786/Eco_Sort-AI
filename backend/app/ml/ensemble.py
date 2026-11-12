@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 import math
 
 from app.core.config import settings
@@ -42,12 +42,22 @@ LOW_CONFIDENCE_THRESHOLD = float(getattr(settings, "LOW_CONFIDENCE_THRESHOLD", 0
 AMBIGUITY_THRESHOLD = 0.10
 
 
-def _validate_and_normalize_probs(probs: Dict[str, float], model_name: str) -> Dict[str, float]:
+def _validate_and_normalize_probs(
+    probs: Dict[str, float],
+    model_name: str,
+    target_classes: Optional[Sequence[str]] = None,
+) -> Dict[str, float]:
     """Validate probability dictionary, ensure all classes exist, and sum to 1.0."""
     if not isinstance(probs, dict) or not probs:
         raise ValueError(f"{model_name} probabilities must be a non-empty dictionary.")
 
-    classes = settings.WASTE_CLASSES
+    if target_classes is not None:
+        classes = target_classes
+    elif "organic" in probs:
+        classes = list(settings.WASTE_CLASSES) + ["organic"]
+    else:
+        classes = settings.WASTE_CLASSES
+
     normalized: Dict[str, float] = {}
 
     for cls in classes:
@@ -69,6 +79,7 @@ def fuse(
     vit_weight: float | None = None,
     clip_weight: float | None = None,
     temperature: float | None = None,
+    classes: Sequence[str] | None = None,
 ) -> EnsembleResult:
     """
     Fuse ViT and CLIP probability distributions via weighted average.
@@ -80,12 +91,19 @@ def fuse(
         vit_weight: weight for ViT (defaults to settings.ENSEMBLE_VIT_WEIGHT).
         clip_weight: weight for CLIP (defaults to settings.ENSEMBLE_CLIP_WEIGHT).
         temperature: optional temperature scalar for probability calibration.
+        classes: optional sequence of waste classes to fuse (defaults to 6-class or 7-class if organic present).
 
     Returns:
         EnsembleResult with raw and calibrated probabilities, predicted class, and diagnostic flags.
     """
-    v_norm = _validate_and_normalize_probs(vit_probs, "ViT")
-    c_norm = _validate_and_normalize_probs(clip_probs, "CLIP")
+    if classes is None:
+        if "organic" in vit_probs or "organic" in clip_probs:
+            classes = list(settings.WASTE_CLASSES) + ["organic"]
+        else:
+            classes = settings.WASTE_CLASSES
+
+    v_norm = _validate_and_normalize_probs(vit_probs, "ViT", target_classes=classes)
+    c_norm = _validate_and_normalize_probs(clip_probs, "CLIP", target_classes=classes)
 
     w_vit = vit_weight if vit_weight is not None else settings.ENSEMBLE_VIT_WEIGHT
     w_clip = clip_weight if clip_weight is not None else settings.ENSEMBLE_CLIP_WEIGHT
@@ -98,7 +116,6 @@ def fuse(
     w_vit /= total_w
     w_clip /= total_w
 
-    classes = settings.WASTE_CLASSES
     ensemble_probs: Dict[str, float] = {}
     for cls in classes:
         p_vit = v_norm[cls]

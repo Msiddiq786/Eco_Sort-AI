@@ -32,6 +32,11 @@ RECOMMENDATIONS: dict[str, str] = {
         "vary by municipality. Rinse containers before recycling. Plastic bags and "
         "film should NOT go in the bin — return them to store drop-off points."
     ),
+    "organic": (
+        "Collect food scraps, fruit peels, vegetable waste, and coffee grounds in a compost bin. "
+        "Do NOT include plastic stickers, wrappers, or meat packaging. Place in the Green Bin "
+        "(Wet Waste) for municipal composting or add to your home compost tumbler."
+    ),
     "trash": (
         "This item does not appear to fit standard recycling categories. Dispose of "
         "it in your general waste bin. Consider whether it could be repaired, "

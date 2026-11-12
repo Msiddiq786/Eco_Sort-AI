@@ -349,19 +349,32 @@ def test_history_api_pagination_response_shape():
 
 def test_stats_api_empty_database():
     from app.main import app
+    from app.database.connection import get_db
 
-    with TestClient(app) as client:
-        resp = client.get("/api/stats")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "total_predictions" in data
-    assert "category_distribution" in data
-    assert "average_confidence" in data
-    assert "recyclable_count" in data
-    assert isinstance(data["category_distribution"], list)
-    # Empty DB → all zeros
-    assert data["total_predictions"] == 0
-    assert data["recyclable_count"] == 0
+    engine, Session = _make_engine_and_session()
+    _run(_setup_db(engine))
+
+    async def _override_get_db():
+        async with Session() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        with TestClient(app) as client:
+            resp = client.get("/api/stats")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "total_predictions" in data
+        assert "category_distribution" in data
+        assert "average_confidence" in data
+        assert "recyclable_count" in data
+        assert isinstance(data["category_distribution"], list)
+        # Empty DB → all zeros
+        assert data["total_predictions"] == 0
+        assert data["recyclable_count"] == 0
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        _run(engine.dispose())
 
 
 # ---------------------------------------------------------------------------

@@ -6,16 +6,33 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_serializer
 
 
 class ClassProbabilities(BaseModel):
-    cardboard: float
-    glass: float
-    metal: float
-    paper: float
-    plastic: float
-    trash: float
+    cardboard: float = 0.0
+    glass: float = 0.0
+    metal: float = 0.0
+    paper: float = 0.0
+    plastic: float = 0.0
+    trash: float = 0.0
+    organic: Optional[float] = None
+
+    @model_serializer(mode="wrap")
+    def _strip_none(self, handler):
+        data = handler(self)
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v is not None}
+        return data
+
+
+class ModelCoverage(BaseModel):
+    vit_supported: bool = True
+    clip_supported: bool = True
+    ensemble_supported: bool = True
+    unsupported_reason: Optional[str] = None
+    compatibility_decision: Optional[str] = None
+    coverage_type: str = "full"
 
 
 class RecyclingDecisionSchema(BaseModel):
@@ -50,6 +67,8 @@ class PredictResponse(BaseModel):
     ood_warning: Optional[str] = None
     recycling_recommendation: str
     recycling_decision: Optional[RecyclingDecisionSchema] = None
+    model_agreement: Optional[bool] = None
+    model_coverage: Optional[ModelCoverage] = None
     model_version: str
     created_at: datetime
 
