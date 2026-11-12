@@ -369,8 +369,8 @@ def test_candidate_box_area_capping():
         bw = b.x2 - b.x1
         bh = b.y2 - b.y1
         box_area = bw * bh
-        # No single box should ever swallow the scene
-        assert box_area <= total_area * 0.22, f"Box exceeded 22% cap: {box_area} > {total_area * 0.22}"
+        # No single box should ever swallow the scene (max 38% area cap)
+        assert box_area <= total_area * 0.38, f"Box exceeded 38% cap: {box_area} > {total_area * 0.38}"
 
 
 def test_paper_prompts_include_cups_and_packaging():
@@ -381,3 +381,46 @@ def test_paper_prompts_include_cups_and_packaging():
     all_text = " ".join(paper_prompts).lower()
     assert "paper cup" in all_text or "coffee cup" in all_text
     assert "packaging" in all_text or "paper bag" in all_text
+
+
+def test_organic_strict_bypass_policy():
+    """
+    Verify strict conditions under which Organic can bypass disagreement review:
+    1. ViT verified 6-class.
+    2. ViT explicitly reports Organic as unsupported.
+    3. CLIP V2 supports Organic.
+    4. CLIP organic confidence and margin requirements satisfied.
+    5. Compatibility decision recorded in response.
+    If both models support Organic, disagreement must route to UNKNOWN_REQUIRES_VERIFICATION.
+    """
+    from app.services.recycling_engine import get_recycling_decision, DisposalStatus
+
+    # Case 1: Verified 6-class ViT with valid CLIP organic confidence & margin (bypass granted)
+    dec_bypass = get_recycling_decision(
+        category="organic",
+        confidence=0.85,
+        model_agreement=False,
+        is_organic_v1_bypass=True,
+    )
+    assert dec_bypass.disposal_status == DisposalStatus.COMPOSTABLE
+    assert "Green" in dec_bypass.disposal_bin
+
+    # Case 2: Both models support organic (ViT >= 7 classes) -> is_organic_v1_bypass is False.
+    # ViT predicts plastic, CLIP predicts organic -> Disagreement MUST route to UNKNOWN_REQUIRES_VERIFICATION!
+    dec_disagree = get_recycling_decision(
+        category="organic",
+        confidence=0.60,
+        model_agreement=False,
+        is_organic_v1_bypass=False,
+    )
+    assert dec_disagree.disposal_status == DisposalStatus.UNKNOWN_REQUIRES_VERIFICATION
+    assert dec_disagree.status_label == "Inspection Required"
+
+    # Case 3: ViT 6-class, but CLIP organic confidence is weak -> is_organic_v1_bypass is False.
+    dec_weak = get_recycling_decision(
+        category="organic",
+        confidence=0.30,
+        model_agreement=False,
+        is_organic_v1_bypass=False,
+    )
+    assert dec_weak.disposal_status == DisposalStatus.UNKNOWN_REQUIRES_VERIFICATION

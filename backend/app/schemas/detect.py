@@ -21,6 +21,7 @@ class ModelCoverage(BaseModel):
     clip_supported: bool = True
     ensemble_supported: bool = True
     unsupported_reason: Optional[str] = None
+    compatibility_decision: Optional[str] = None
 
 
 class DetectedObject(BaseModel):

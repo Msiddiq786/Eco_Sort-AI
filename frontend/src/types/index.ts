@@ -76,6 +76,7 @@ export interface ModelCoverage {
   clip_supported: boolean;
   ensemble_supported: boolean;
   unsupported_reason?: string | null;
+  compatibility_decision?: string | null;
 }
 
 export interface DetectedObject {

@@ -213,17 +213,17 @@ class WasteObjectDetector:
         thresh_val = float(np.percentile(energy_map, 66))
         binary = energy_map > thresh_val
 
-        # Morphological opening severs thin contact bridges between adjacent touching objects
-        binary_open = ndi.binary_opening(binary, structure=np.ones((5, 5)))
-        # Morphological closing bridges internal specular reflections on bottles/cans
-        binary_clean = ndi.binary_closing(binary_open, structure=np.ones((7, 7)))
+        # Morphological opening (3x3) severs thin contact bridges while safeguarding small objects
+        binary_open = ndi.binary_opening(binary, structure=np.ones((3, 3)))
+        # Morphological closing (5x5) bridges internal specular reflections on bottles/cans
+        binary_clean = ndi.binary_closing(binary_open, structure=np.ones((5, 5)))
 
         labeled, num_features = ndi.label(binary_clean)
         slices = ndi.find_objects(labeled)
 
         proposals: List[Tuple[Tuple[float, float, float, float], float, str]] = []
-        min_box_area = total_area * 0.005   # Captures smaller distinct objects (caps, small cans)
-        max_box_area = total_area * 0.22    # Strict cap: prevents scene-level swallow (<= 22% canvas)
+        min_box_area = total_area * 0.004   # Captures smaller distinct objects (caps, small cans)
+        max_box_area = total_area * 0.38    # Permits large cardboard boxes/containers while preventing scene swallow
 
         for sl in slices:
             if sl is None:
@@ -234,9 +234,9 @@ class WasteObjectDetector:
             bh = y2 - y1
 
             # Filter border artifacts (e.g. conveyor belt rubber edge borders)
-            if (x1 <= 6 and x2 <= 55 and bh > h * 0.65) or (x1 >= w - 55 and x2 >= w - 6 and bh > h * 0.65):
+            if (x1 <= 6 and x2 <= 55 and bh > h * 0.70) or (x1 >= w - 55 and x2 >= w - 6 and bh > h * 0.70):
                 continue
-            if min(bw, bh) < 16:
+            if min(bw, bh) < 12:
                 continue
 
             area = bw * bh
@@ -244,8 +244,8 @@ class WasteObjectDetector:
                 continue
 
             # Candidate splitting: if an elongated or large region contains multiple adjacent objects,
-            # split along the projection profile valley
-            if (area > total_area * 0.055 or bw > w * 0.35 or bh > h * 0.45):
+            # split along the projection profile valley if a deep trough exists
+            if (area > total_area * 0.07 or bw > w * 0.40 or bh > h * 0.50):
                 sub_mask = binary_clean[y1:y2, x1:x2]
                 v_proj = sub_mask.sum(axis=0)
                 h_proj = sub_mask.sum(axis=1)
@@ -256,13 +256,15 @@ class WasteObjectDetector:
                     mid_start = int(bw * 0.25)
                     mid_end = int(bw * 0.75)
                     mid_v = v_proj[mid_start:mid_end]
-                    if len(mid_v) > 0 and float(mid_v.min()) < 0.48 * float(v_proj.max()):
+                    # Require deep trough (< 35% of peak) to prevent over-splitting single continuous objects
+                    if len(mid_v) > 0 and float(mid_v.min()) < 0.35 * float(v_proj.max()):
                         split_x = mid_start + int(np.argmin(mid_v))
                         b1 = (float(x1), float(y1), float(x1 + split_x), float(y2))
                         b2 = (float(x1 + split_x), float(y1), float(x2), float(y2))
                         for b_cand in (b1, b2):
-                            a_cand = (b_cand[2] - b_cand[0]) * (b_cand[3] - b_cand[1])
-                            if a_cand >= min_box_area:
+                            cand_w = b_cand[2] - b_cand[0]
+                            cand_h = b_cand[3] - b_cand[1]
+                            if cand_w >= 20 and cand_h >= 20 and (cand_w * cand_h) >= min_box_area:
                                 proposals.append((b_cand, 0.85, "waste_object"))
                         split_done = True
 
@@ -271,13 +273,14 @@ class WasteObjectDetector:
                     mid_start = int(bh * 0.25)
                     mid_end = int(bh * 0.75)
                     mid_h = h_proj[mid_start:mid_end]
-                    if len(mid_h) > 0 and float(mid_h.min()) < 0.48 * float(h_proj.max()):
+                    if len(mid_h) > 0 and float(mid_h.min()) < 0.35 * float(h_proj.max()):
                         split_y = mid_start + int(np.argmin(mid_h))
                         b1 = (float(x1), float(y1), float(x2), float(y1 + split_y))
                         b2 = (float(x1), float(y1 + split_y), float(x2), float(y2))
                         for b_cand in (b1, b2):
-                            a_cand = (b_cand[2] - b_cand[0]) * (b_cand[3] - b_cand[1])
-                            if a_cand >= min_box_area:
+                            cand_w = b_cand[2] - b_cand[0]
+                            cand_h = b_cand[3] - b_cand[1]
+                            if cand_w >= 20 and cand_h >= 20 and (cand_w * cand_h) >= min_box_area:
                                 proposals.append((b_cand, 0.85, "waste_object"))
                         split_done = True
 
@@ -458,17 +461,35 @@ def detect_and_classify_objects(
         vit_top_prob = vit_probs[vit_top]
 
         # Check organic condition: if CLIP detects organic with high confidence and ViT only has 6 classes
-        if clip_pred == "organic" and clip_probs.get("organic", 0.0) >= 0.40 and vit_num_classes == 6:
+        clip_organic_prob = clip_probs.get("organic", 0.0)
+        second_clip_prob = max([v for k, v in clip_probs.items() if k != "organic"], default=0.0)
+        clip_organic_margin = clip_organic_prob - second_clip_prob
+
+        # Strict Organic V1 Bypass Policy:
+        # 1. ViT checkpoint verified to have six classes (vit_num_classes == 6)
+        # 2. ViT reports organic as unsupported
+        # 3. CLIP V2 supports organic ("organic" in clip_probs)
+        # 4. CLIP organic confidence >= 0.40 and margin >= 0.10
+        # 5. Compatibility decision recorded in response
+        # (If ViT has >= 7 classes, organic is evaluated with standard ensemble & disagreement routing)
+        is_organic_v1_bypass = (
+            vit_num_classes == 6
+            and clip_pred == "organic"
+            and clip_organic_prob >= 0.40
+            and clip_organic_margin >= 0.10
+        )
+
+        if is_organic_v1_bypass:
             # ViT V1 lacks organic class; recognize organic based on CLIP foundation model
             final_cat = "organic"
-            final_conf = clip_probs.get("organic", 0.85)
+            final_conf = clip_organic_prob
             class_probs = {
                 "cardboard": round(vit_probs.get("cardboard", 0.0) * 0.7 + clip_probs.get("cardboard", 0.0) * 0.3, 4),
                 "glass": round(vit_probs.get("glass", 0.0) * 0.7 + clip_probs.get("glass", 0.0) * 0.3, 4),
                 "metal": round(vit_probs.get("metal", 0.0) * 0.7 + clip_probs.get("metal", 0.0) * 0.3, 4),
                 "paper": round(vit_probs.get("paper", 0.0) * 0.7 + clip_probs.get("paper", 0.0) * 0.3, 4),
                 "plastic": round(vit_probs.get("plastic", 0.0) * 0.7 + clip_probs.get("plastic", 0.0) * 0.3, 4),
-                "organic": round(clip_probs.get("organic", 0.85), 4),
+                "organic": round(clip_organic_prob, 4),
                 "trash": round(vit_probs.get("trash", 0.0) * 0.35 + clip_probs.get("trash", 0.0) * 0.3, 4),
             }
             # Normalize to strictly sum to 1.0
@@ -479,8 +500,9 @@ def detect_and_classify_objects(
             conf_status = "normal" if final_conf >= 0.70 else "ambiguous"
             models_agree = False
             vit_prediction_label = "Not supported (V1 6-class)"
+            compat_decision = "organic_v1_clip_bypass"
         else:
-            # Both models operating on shared classes
+            # Both models operating on shared classes (or 7-class ViT if loaded)
             fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
             final_cat = fused.predicted_category
             # Use raw unsharpened ensemble confidence
@@ -489,6 +511,7 @@ def detect_and_classify_objects(
             is_ood = fused.is_out_of_distribution
             models_agree = fused.vit_prediction.lower() == fused.clip_prediction.lower()
             vit_prediction_label = fused.vit_prediction
+            compat_decision = "consensus_or_disagreement" if vit_num_classes >= 7 else "v1_shared_6class"
 
             # Disagreement & confidence tier policy
             if is_ood:
@@ -515,6 +538,7 @@ def detect_and_classify_objects(
             confidence_status=conf_status,
             item_context=label,
             model_agreement=models_agree,
+            is_organic_v1_bypass=is_organic_v1_bypass,
         )
 
         # Accumulate summary counts
@@ -541,10 +565,11 @@ def detect_and_classify_objects(
             clip_supported=True,
             ensemble_supported=(vit_num_classes >= 7 or final_cat != "organic"),
             unsupported_reason=(
-                "ViT V1 is fine-tuned on 6 classes and does not natively support organic waste. Evaluated via CLIP foundation model."
-                if (vit_num_classes == 6 and final_cat == "organic")
+                "ViT V1 is fine-tuned on 6 classes and lacks the organic class. Evaluated via CLIP V2 foundation model (validated organic confidence & margin)."
+                if is_organic_v1_bypass
                 else None
             ),
+            compatibility_decision=compat_decision,
         )
 
         detected_objects.append(

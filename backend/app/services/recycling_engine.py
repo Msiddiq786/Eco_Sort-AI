@@ -186,24 +186,34 @@ def get_recycling_decision(
     confidence_status: str = "normal",
     item_context: Optional[str] = None,
     model_agreement: Optional[bool] = None,
+    is_organic_v1_bypass: bool = False,
 ) -> RecyclingDecision:
     """
     Compute an intelligent recycling decision based on material category and inference uncertainty.
 
     If out-of-distribution, confidence is low, or models disagree, routes strictly to UNKNOWN_REQUIRES_VERIFICATION.
+    Exemption: Organic waste can bypass model disagreement review ONLY when is_organic_v1_bypass is True
+    (ViT is verified 6-class, ViT organic is unsupported, CLIP V2 organic is supported with validated confidence/margin).
+    If both models support Organic, disagreement routes to UNKNOWN_REQUIRES_VERIFICATION.
     """
     cat_lower = category.lower().strip()
 
-    # Route uncertainty, model disagreement, or OOD to UNKNOWN_REQUIRES_VERIFICATION
-    # (Organic waste supported via CLIP foundation model routes to COMPOSTABLE when confidence is sufficient)
+    # Disagreement policy:
+    # If models disagree, route to UNKNOWN_REQUIRES_VERIFICATION.
+    # Exemption: ONLY when is_organic_v1_bypass is True (ViT is verified 6-class,
+    # ViT organic unsupported, CLIP V2 organic supported, confidence and margin satisfied).
+    # If both models support Organic, model_agreement is evaluated normally and
+    # disagreement MUST route to UNKNOWN_REQUIRES_VERIFICATION!
+    is_disagreement = (model_agreement is False) and not is_organic_v1_bypass
+
     if (
         is_ood
-        or (model_agreement is False and cat_lower != "organic")
+        or is_disagreement
         or confidence_status in ("out_of_distribution", "unknown", "low_confidence")
         or confidence < 0.38
     ):
         rule = MATERIAL_RULES["unknown"]
-        if model_agreement is False:
+        if is_disagreement:
             reason = "Model disagreement between ViT and CLIP requires manual inspection before disposal."
             action = "Inspection required — separate or examine material before bin placement."
             status_label = "Inspection Required"
