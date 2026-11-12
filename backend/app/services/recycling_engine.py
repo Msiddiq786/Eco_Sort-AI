@@ -194,7 +194,11 @@ def get_recycling_decision(
     cat_lower = category.lower().strip()
 
     # Route uncertainty & OOD to UNKNOWN_REQUIRES_VERIFICATION
-    if is_ood or confidence_status in ("out_of_distribution", "unknown") or (confidence < 0.35 and cat_lower != "trash"):
+    if (
+        is_ood
+        or confidence_status in ("out_of_distribution", "unknown", "low_confidence")
+        or confidence < 0.38
+    ):
         rule = MATERIAL_RULES["unknown"]
         return RecyclingDecision(
             disposal_status=rule["disposal_status"],
@@ -202,13 +206,13 @@ def get_recycling_decision(
             action=rule["action"],
             preparation_steps=list(rule["preparation_steps"]),
             disposal_bin=rule["disposal_bin"],
-            reason=f"Classification confidence is low ({confidence*100:.1f}%) or out-of-distribution. {rule['reason']}",
+            reason=f"Classification confidence is low ({confidence*100:.1f}%) or requires human verification. {rule['reason']}",
             safety_info=rule["safety_info"],
             regional_caveats=rule["regional_caveats"],
         )
 
-    # Specific material lookup
-    rule = MATERIAL_RULES.get(cat_lower, MATERIAL_RULES["trash"])
+    # Specific material lookup (default to unknown if unmapped category)
+    rule = MATERIAL_RULES.get(cat_lower, MATERIAL_RULES["unknown"])
 
     # If context indicates hazardous item (battery, chemical, e-waste)
     if item_context and any(kw in item_context.lower() for kw in ["battery", "chemical", "mercury", "bulb", "tube", "electronics"]):
