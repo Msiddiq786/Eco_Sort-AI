@@ -386,8 +386,15 @@ def detect_and_classify_objects(
             try:
                 # Use CLIP V2 with 7 classes (including organic)
                 clip_v2_res = predict_clip_v2(clip_model, clip_processor, crop_img)
-                clip_probs = clip_v2_res.probabilities
-                clip_pred = clip_v2_res.predicted_category
+                if hasattr(clip_v2_res, "probabilities"):
+                    clip_probs = clip_v2_res.probabilities
+                    clip_pred = clip_v2_res.predicted_category
+                elif isinstance(clip_v2_res, dict):
+                    clip_probs = clip_v2_res
+                    clip_pred = max(clip_probs, key=clip_probs.get)
+                else:
+                    clip_probs = vit_probs
+                    clip_pred = max(vit_probs, key=vit_probs.get)
             except Exception as exc:
                 logger.warning("CLIP V2 inference failed: %s. Using 6-class fallback.", exc)
                 try:

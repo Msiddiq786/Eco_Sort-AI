@@ -123,5 +123,133 @@ def test_detect_endpoint_successful_detection():
         assert "annotated_image_base64" in data
         assert data["annotated_image_base64"].startswith("data:image/jpeg;base64,")
         assert "recycling_summary" in data
+
+        # Verify summary invariant: sum of status counts == total_objects
+        sc = data["recycling_summary"]["status_counts"]
+        total_sc = sum(sc.values())
+        assert total_sc == data["total_objects"]
     finally:
         app.dependency_overrides.pop(get_model_registry, None)
+
+
+def test_organic_waste_v1_compatibility_and_compostable():
+    """Verify that organic waste identified by CLIP V2 is handled with V1 compatibility."""
+    from app.ml.detector import detect_and_classify_objects
+    from unittest.mock import patch, MagicMock
+
+    img = Image.new("RGB", (200, 200), color=(255, 255, 255))
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([30, 30, 90, 90], fill=(30, 30, 30))
+
+    mock_vit_model = MagicMock()
+    mock_vit_model.config.num_labels = 6
+    mock_vit_proc = MagicMock()
+
+    mock_vit_probs = {
+        "cardboard": 0.05,
+        "glass": 0.05,
+        "metal": 0.05,
+        "paper": 0.05,
+        "plastic": 0.10,
+        "trash": 0.70,
+    }
+    mock_clip_probs = {
+        "cardboard": 0.02,
+        "glass": 0.02,
+        "metal": 0.02,
+        "paper": 0.02,
+        "plastic": 0.02,
+        "trash": 0.05,
+        "organic": 0.85,
+    }
+
+    with patch("app.ml.detector.predict_vit", return_value=mock_vit_probs):
+        with patch("app.ml.detector.predict_clip_v2", return_value=mock_clip_probs):
+            res = detect_and_classify_objects(
+                img,
+                vit_model=mock_vit_model,
+                vit_processor=mock_vit_proc,
+                clip_model=MagicMock(),
+                clip_processor=MagicMock(),
+            )
+
+    assert res.total_objects >= 1
+    obj = res.objects[0]
+    assert obj.material_category == "organic"
+    assert obj.recycling_status == "COMPOSTABLE"
+    assert obj.model_coverage.vit_supported is False
+    assert obj.model_coverage.clip_supported is True
+    assert "Green" in obj.recycling_decision.disposal_bin
+
+
+def test_model_disagreement_triggers_review():
+    """Verify that when ViT and CLIP disagree, confidence_status is marked ambiguous."""
+    from app.ml.detector import detect_and_classify_objects
+    from unittest.mock import patch, MagicMock
+
+    img = Image.new("RGB", (200, 200), color=(255, 255, 255))
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([25, 25, 85, 85], fill=(40, 40, 40))
+
+    mock_vit_model = MagicMock()
+    mock_vit_model.config.num_labels = 6
+    mock_vit_proc = MagicMock()
+
+    mock_vit_probs = {
+        "cardboard": 0.05,
+        "glass": 0.05,
+        "metal": 0.05,
+        "paper": 0.05,
+        "plastic": 0.75,
+        "trash": 0.05,
+    }
+    mock_clip_probs = {
+        "cardboard": 0.05,
+        "glass": 0.05,
+        "metal": 0.75,
+        "paper": 0.05,
+        "plastic": 0.05,
+        "trash": 0.05,
+    }
+
+    with patch("app.ml.detector.predict_vit", return_value=mock_vit_probs):
+        with patch("app.ml.detector.predict_clip_v2", return_value=mock_clip_probs):
+            res = detect_and_classify_objects(
+                img,
+                vit_model=mock_vit_model,
+                vit_processor=mock_vit_proc,
+                clip_model=MagicMock(),
+                clip_processor=MagicMock(),
+            )
+
+    assert res.total_objects >= 1
+    obj = res.objects[0]
+    assert obj.model_agreement is False
+    assert obj.confidence_status == "ambiguous"
+    # Verify probability normalization
+    assert abs(sum(obj.class_probabilities.values()) - 1.0) < 0.01
+
+
+def test_waste_object_detector_nms():
+    """Verify Non-Maximum Suppression suppresses heavily overlapping bounding boxes."""
+    from app.ml.detector import WasteObjectDetector, calculate_iou
+
+    detector = WasteObjectDetector()
+    img = Image.new("RGB", (300, 300), color=(255, 255, 255))
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(img)
+    # Draw two distinct separated objects
+    draw.rectangle([30, 30, 100, 100], fill=(20, 20, 20))
+    draw.rectangle([180, 180, 260, 260], fill=(20, 20, 20))
+
+    boxes = detector.detect_objects(img)
+    assert len(boxes) >= 2
+    # Verify no two boxes have IoU > 0.40
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            box_i = (boxes[i][0].x1, boxes[i][0].y1, boxes[i][0].x2, boxes[i][0].y2)
+            box_j = (boxes[j][0].x1, boxes[j][0].y1, boxes[j][0].x2, boxes[j][0].y2)
+            iou = calculate_iou(box_i, box_j)
+            assert iou <= 0.40
