@@ -119,8 +119,12 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
             <span className="px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-medium">
               Spatial Detection: {(object.detection_confidence * 100).toFixed(0)}%
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              {decision?.status_label || object.recycling_status}
+            <span className={`px-2.5 py-0.5 rounded-full font-bold ${
+              !isAgree || object.recycling_status === 'UNKNOWN_REQUIRES_VERIFICATION'
+                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                : 'bg-emerald-100 text-emerald-800'
+            }`}>
+              {decision?.status_label || (isAgree ? object.recycling_status : 'Inspection Required')}
             </span>
             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px]">
               Status: {object.confidence_status}

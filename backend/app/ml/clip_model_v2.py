@@ -51,7 +51,9 @@ V2_CLIP_PROMPT_TEMPLATES: Dict[str, List[str]] = {
         "a photo of a clean tin can or aluminum foil",
     ],
     "paper": [
-        "a photo of paper waste or newspaper",
+        "a photo of a paper cup or disposable coffee cup",
+        "a photo of paper packaging, paper bag, or kraft paper",
+        "a photo of paper waste, newspaper, or paper sheets",
         "a photo of printed office paper, magazine, or document",
         "a photo of clean sheets of paper or newsprint",
         "a photo of dry paper for paper recycling",

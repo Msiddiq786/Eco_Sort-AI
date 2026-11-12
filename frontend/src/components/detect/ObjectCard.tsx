@@ -99,10 +99,18 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
 
       {/* Disposal recommendation footer */}
       <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-        <div className="flex items-center gap-1.5 text-emerald-800 font-medium">
-          <Recycle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+        <div className={`flex items-center gap-1.5 font-medium ${
+          !isAgree || object.recycling_status === 'UNKNOWN_REQUIRES_VERIFICATION'
+            ? 'text-amber-800 font-semibold'
+            : 'text-emerald-800'
+        }`}>
+          <Recycle className={`h-3.5 w-3.5 shrink-0 ${
+            !isAgree || object.recycling_status === 'UNKNOWN_REQUIRES_VERIFICATION'
+              ? 'text-amber-600'
+              : 'text-emerald-600'
+          }`} />
           <span className="text-[11px] truncate max-w-[180px]">
-            {object.recycling_decision?.status_label || object.recycling_status}
+            {object.recycling_decision?.status_label || (isAgree ? object.recycling_status : 'Inspection Required')}
           </span>
         </div>
         <ChevronRight className={`h-4 w-4 text-slate-400 transition-transform ${isSelected ? 'rotate-90 text-emerald-600' : ''}`} />

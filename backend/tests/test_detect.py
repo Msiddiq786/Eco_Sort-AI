@@ -253,3 +253,131 @@ def test_waste_object_detector_nms():
             box_j = (boxes[j][0].x1, boxes[j][0].y1, boxes[j][0].x2, boxes[j][0].y2)
             iou = calculate_iou(box_i, box_j)
             assert iou <= 0.40
+
+
+def test_13_objects_regression_six_disagreements():
+    """
+    Regression test reproducing the exact 13-object detection scenario with 6 model disagreement cases:
+    - Object #2: ViT Plastic, CLIP Glass
+    - Object #3: ViT Cardboard, CLIP Trash
+    - Object #4: ViT Metal, CLIP Cardboard
+    - Object #5: ViT Glass, CLIP Metal
+    - Object #9: ViT Glass, CLIP Metal
+    - Object #13: ViT Glass, CLIP Plastic
+    - Plus 7 consensus cases (e.g. 4 Recyclable metal, 3 Conditionally Recyclable plastic).
+
+    Expected Invariant:
+    - Total objects: 13
+    - Review stream (UNKNOWN_REQUIRES_VERIFICATION): 6
+    - Recyclable: 4
+    - Conditionally Recyclable: 3
+    - Sum of all 6 streams == 13 (zero double counting)
+    - Every disagreement object has status_label == 'Inspection Required'.
+    """
+    from app.services.recycling_engine import get_recycling_decision, DisposalStatus
+
+    # Defined predictions for all 13 items
+    test_cases = [
+        # obj_id, vit_pred, clip_pred, expected_agree
+        (1, "metal", "metal", True),        # Agree -> Recyclable
+        (2, "plastic", "glass", False),      # Disagree -> Review (#1 of 6)
+        (3, "cardboard", "trash", False),    # Disagree -> Review (#2 of 6)
+        (4, "metal", "cardboard", False),    # Disagree -> Review (#3 of 6)
+        (5, "glass", "metal", False),        # Disagree -> Review (#4 of 6)
+        (6, "metal", "metal", True),        # Agree -> Recyclable
+        (7, "plastic", "plastic", True),    # Agree -> Conditional
+        (8, "plastic", "plastic", True),    # Agree -> Conditional
+        (9, "glass", "metal", False),        # Disagree -> Review (#5 of 6)
+        (10, "metal", "metal", True),       # Agree -> Recyclable
+        (11, "metal", "metal", True),       # Agree -> Recyclable
+        (12, "plastic", "plastic", True),   # Agree -> Conditional
+        (13, "glass", "plastic", False),     # Disagree -> Review (#6 of 6)
+    ]
+
+    status_counts = {
+        "recyclable": 0,
+        "conditionally_recyclable": 0,
+        "compostable": 0,
+        "hazardous": 0,
+        "not_standard": 0,
+        "unknown": 0,
+    }
+
+    disagreement_count = 0
+
+    for obj_id, vit_pred, clip_pred, is_agree in test_cases:
+        final_cat = vit_pred if is_agree else vit_pred
+        final_conf = 0.85 if is_agree else 0.55
+        conf_status = "normal" if is_agree else "ambiguous"
+
+        rec_decision = get_recycling_decision(
+            category=final_cat,
+            confidence=final_conf,
+            is_ood=False,
+            confidence_status=conf_status,
+            model_agreement=is_agree,
+        )
+
+        disp_status = rec_decision.disposal_status
+        if disp_status == DisposalStatus.RECYCLABLE:
+            status_counts["recyclable"] += 1
+        elif disp_status == DisposalStatus.CONDITIONALLY_RECYCLABLE:
+            status_counts["conditionally_recyclable"] += 1
+        elif disp_status == DisposalStatus.COMPOSTABLE:
+            status_counts["compostable"] += 1
+        elif disp_status == DisposalStatus.HAZARDOUS_SPECIAL_DISPOSAL:
+            status_counts["hazardous"] += 1
+        elif disp_status == DisposalStatus.NOT_STANDARD_RECYCLABLE:
+            status_counts["not_standard"] += 1
+        else:
+            status_counts["unknown"] += 1
+
+        if not is_agree:
+            disagreement_count += 1
+            assert rec_decision.disposal_status == DisposalStatus.UNKNOWN_REQUIRES_VERIFICATION
+            assert rec_decision.status_label == "Inspection Required"
+            assert "disagreement" in rec_decision.reason.lower()
+
+    # Verify counts
+    assert len(test_cases) == 13
+    assert disagreement_count == 6
+    assert status_counts["unknown"] == 6
+    assert status_counts["recyclable"] == 4
+    assert status_counts["conditionally_recyclable"] == 3
+
+    # Invariant: sum of all six streams must equal 13 exactly
+    total_accounted = sum(status_counts.values())
+    assert total_accounted == 13
+
+
+def test_candidate_box_area_capping():
+    """Verify that WasteObjectDetector enforces maximum area cap (<= 22% of image canvas)."""
+    from app.ml.detector import WasteObjectDetector
+
+    detector = WasteObjectDetector()
+    # Create an image with an oversized central block
+    w, h = 600, 600
+    total_area = w * h
+    img = Image.new("RGB", (w, h), color=(20, 20, 20))
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(img)
+    # Draw a 400x400 block (44% of image area)
+    draw.rectangle([100, 100, 500, 500], fill=(220, 220, 220))
+
+    boxes = detector.detect_objects(img)
+    for b, score, label in boxes:
+        bw = b.x2 - b.x1
+        bh = b.y2 - b.y1
+        box_area = bw * bh
+        # No single box should ever swallow the scene
+        assert box_area <= total_area * 0.22, f"Box exceeded 22% cap: {box_area} > {total_area * 0.22}"
+
+
+def test_paper_prompts_include_cups_and_packaging():
+    """Verify that CLIP V2 paper prompt templates cover disposable cups and packaging."""
+    from app.ml.clip_model_v2 import V2_CLIP_PROMPT_TEMPLATES
+
+    paper_prompts = V2_CLIP_PROMPT_TEMPLATES["paper"]
+    all_text = " ".join(paper_prompts).lower()
+    assert "paper cup" in all_text or "coffee cup" in all_text
+    assert "packaging" in all_text or "paper bag" in all_text

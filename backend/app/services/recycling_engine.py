@@ -185,29 +185,45 @@ def get_recycling_decision(
     is_ood: bool = False,
     confidence_status: str = "normal",
     item_context: Optional[str] = None,
+    model_agreement: Optional[bool] = None,
 ) -> RecyclingDecision:
     """
     Compute an intelligent recycling decision based on material category and inference uncertainty.
 
-    If out-of-distribution or confidence is very low, routes to UNKNOWN_REQUIRES_VERIFICATION.
+    If out-of-distribution, confidence is low, or models disagree, routes strictly to UNKNOWN_REQUIRES_VERIFICATION.
     """
     cat_lower = category.lower().strip()
 
-    # Route uncertainty & OOD to UNKNOWN_REQUIRES_VERIFICATION
+    # Route uncertainty, model disagreement, or OOD to UNKNOWN_REQUIRES_VERIFICATION
+    # (Organic waste supported via CLIP foundation model routes to COMPOSTABLE when confidence is sufficient)
     if (
         is_ood
+        or (model_agreement is False and cat_lower != "organic")
         or confidence_status in ("out_of_distribution", "unknown", "low_confidence")
         or confidence < 0.38
     ):
         rule = MATERIAL_RULES["unknown"]
+        if model_agreement is False:
+            reason = "Model disagreement between ViT and CLIP requires manual inspection before disposal."
+            action = "Inspection required — separate or examine material before bin placement."
+            status_label = "Inspection Required"
+        elif is_ood:
+            reason = f"Out-of-distribution item detected. {rule['reason']}"
+            action = rule["action"]
+            status_label = "Needs Verification"
+        else:
+            reason = f"Classification confidence is low ({confidence*100:.1f}%) or requires human verification. {rule['reason']}"
+            action = rule["action"]
+            status_label = "Needs Verification"
+
         return RecyclingDecision(
-            disposal_status=rule["disposal_status"],
-            status_label=rule["status_label"],
-            action=rule["action"],
+            disposal_status=DisposalStatus.UNKNOWN_REQUIRES_VERIFICATION,
+            status_label=status_label,
+            action=action,
             preparation_steps=list(rule["preparation_steps"]),
-            disposal_bin=rule["disposal_bin"],
-            reason=f"Classification confidence is low ({confidence*100:.1f}%) or requires human verification. {rule['reason']}",
-            safety_info=rule["safety_info"],
+            disposal_bin="Review / Inspection Required (Consult local guidelines)",
+            reason=reason,
+            safety_info=rule.get("safety_info"),
             regional_caveats=rule["regional_caveats"],
         )
 

@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import scipy.ndimage as ndi
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from app.ml.clip_model import predict_clip
@@ -189,8 +190,8 @@ class WasteObjectDetector:
             except Exception as exc:
                 logger.error("YOLO inference failed: %s. Using spatial decomposition engine.", exc)
 
-        # 2. Multi-Scale Spatial Peak & Morphological Decomposition
-        # Prevents multiple touching/nearby objects from merging into one giant box
+        # 2. Multi-Scale Morphological Saliency & Spatial Peak Decomposition
+        # Accurately localizes individual objects and severs touching bridges
         rgb_img = pil_image.convert("RGB")
         gray = rgb_img.convert("L")
 
@@ -199,52 +200,96 @@ class WasteObjectDetector:
 
         arr_fine = np.array(edges_fine, dtype=np.float32)
         arr_smooth = np.array(edges_smooth, dtype=np.float32)
-        energy_map = (arr_fine * 0.6) + (arr_smooth * 0.4)
+        arr_gray = np.array(gray, dtype=np.float32)
 
-        thresh_val = np.percentile(energy_map, 72)
-        binary = (energy_map > thresh_val).astype(np.float32)
+        bg_val = float(np.median(arr_gray))
+        contrast = np.abs(arr_gray - bg_val)
 
-        grid_resolutions = [(8, 8), (12, 12), (16, 16)]
+        edges_norm = (arr_fine * 0.6 + arr_smooth * 0.4)
+        max_edges = edges_norm.max() + 1e-5
+        max_contrast = contrast.max() + 1e-5
+
+        energy_map = 0.55 * (edges_norm / max_edges) + 0.45 * (contrast / max_contrast)
+        thresh_val = float(np.percentile(energy_map, 66))
+        binary = energy_map > thresh_val
+
+        # Morphological opening severs thin contact bridges between adjacent touching objects
+        binary_open = ndi.binary_opening(binary, structure=np.ones((5, 5)))
+        # Morphological closing bridges internal specular reflections on bottles/cans
+        binary_clean = ndi.binary_closing(binary_open, structure=np.ones((7, 7)))
+
+        labeled, num_features = ndi.label(binary_clean)
+        slices = ndi.find_objects(labeled)
+
         proposals: List[Tuple[Tuple[float, float, float, float], float, str]] = []
+        min_box_area = total_area * 0.005   # Captures smaller distinct objects (caps, small cans)
+        max_box_area = total_area * 0.22    # Strict cap: prevents scene-level swallow (<= 22% canvas)
 
-        min_box_area = total_area * 0.012   # Captures smaller distinct objects (cans, peels, caps)
-        max_box_area = total_area * 0.46    # Capped at 46% to NEVER allow single scene-level swallow!
+        for sl in slices:
+            if sl is None:
+                continue
+            y1, y2 = sl[0].start, sl[0].stop
+            x1, x2 = sl[1].start, sl[1].stop
+            bw = x2 - x1
+            bh = y2 - y1
 
-        for rows, cols in grid_resolutions:
-            ch, cw = h / rows, w / cols
-            activity = np.zeros((rows, cols), dtype=np.float32)
+            # Filter border artifacts (e.g. conveyor belt rubber edge borders)
+            if (x1 <= 6 and x2 <= 55 and bh > h * 0.65) or (x1 >= w - 55 and x2 >= w - 6 and bh > h * 0.65):
+                continue
+            if min(bw, bh) < 16:
+                continue
 
-            for r in range(rows):
-                y1, y2 = int(r * ch), int((r + 1) * ch)
-                for c in range(cols):
-                    x1, x2 = int(c * cw), int((c + 1) * cw)
-                    activity[r, c] = np.mean(binary[y1:y2, x1:x2])
+            area = bw * bh
+            if area < min_box_area:
+                continue
 
-            active_cells = np.argwhere(activity > 0.10)
-            for r, c in active_cells:
-                spread_r = 1
-                spread_c = 1
+            # Candidate splitting: if an elongated or large region contains multiple adjacent objects,
+            # split along the projection profile valley
+            if (area > total_area * 0.055 or bw > w * 0.35 or bh > h * 0.45):
+                sub_mask = binary_clean[y1:y2, x1:x2]
+                v_proj = sub_mask.sum(axis=0)
+                h_proj = sub_mask.sum(axis=1)
 
-                while r - spread_r >= 0 and np.mean(activity[r - spread_r : r, c]) > 0.07 and spread_r < 4:
-                    spread_r += 1
-                while r + spread_r < rows and np.mean(activity[r : r + spread_r, c]) > 0.07 and spread_r < 4:
-                    spread_r += 1
-                while c - spread_c >= 0 and np.mean(activity[r, c - spread_c : c]) > 0.07 and spread_c < 4:
-                    spread_c += 1
-                while c + spread_c < cols and np.mean(activity[r, c : c + spread_c]) > 0.07 and spread_c < 4:
-                    spread_c += 1
+                split_done = False
+                # Check vertical valley split (for horizontally adjacent objects)
+                if bw >= bh and bw > 100:
+                    mid_start = int(bw * 0.25)
+                    mid_end = int(bw * 0.75)
+                    mid_v = v_proj[mid_start:mid_end]
+                    if len(mid_v) > 0 and float(mid_v.min()) < 0.48 * float(v_proj.max()):
+                        split_x = mid_start + int(np.argmin(mid_v))
+                        b1 = (float(x1), float(y1), float(x1 + split_x), float(y2))
+                        b2 = (float(x1 + split_x), float(y1), float(x2), float(y2))
+                        for b_cand in (b1, b2):
+                            a_cand = (b_cand[2] - b_cand[0]) * (b_cand[3] - b_cand[1])
+                            if a_cand >= min_box_area:
+                                proposals.append((b_cand, 0.85, "waste_object"))
+                        split_done = True
 
-                bx1 = max(0.0, float(c - spread_c) * cw)
-                by1 = max(0.0, float(r - spread_r) * ch)
-                bx2 = min(float(w), float(c + spread_c + 1) * cw)
-                by2 = min(float(h), float(r + spread_r + 1) * ch)
+                # Check horizontal valley split (for vertically stacked objects)
+                elif bh > bw and bh > 100 and not split_done:
+                    mid_start = int(bh * 0.25)
+                    mid_end = int(bh * 0.75)
+                    mid_h = h_proj[mid_start:mid_end]
+                    if len(mid_h) > 0 and float(mid_h.min()) < 0.48 * float(h_proj.max()):
+                        split_y = mid_start + int(np.argmin(mid_h))
+                        b1 = (float(x1), float(y1), float(x2), float(y1 + split_y))
+                        b2 = (float(x1), float(y1 + split_y), float(x2), float(y2))
+                        for b_cand in (b1, b2):
+                            a_cand = (b_cand[2] - b_cand[0]) * (b_cand[3] - b_cand[1])
+                            if a_cand >= min_box_area:
+                                proposals.append((b_cand, 0.85, "waste_object"))
+                        split_done = True
 
-                b_area = (bx2 - bx1) * (by2 - by1)
-                if min_box_area <= b_area <= max_box_area:
-                    cell_score = min(0.95, max(0.68, 0.70 + (float(activity[r, c]) * 0.85)))
-                    proposals.append(((bx1, by1, bx2, by2), cell_score, "waste_object"))
+                if split_done:
+                    continue
 
-        suppressed_proposals = apply_non_maximum_suppression(proposals, iou_threshold=0.35)
+            if area <= max_box_area:
+                comp_energy = float(np.mean(energy_map[y1:y2, x1:x2]))
+                score = min(0.96, max(0.68, 0.65 + 0.32 * comp_energy))
+                proposals.append(((float(x1), float(y1), float(x2), float(y2)), round(score, 3), "waste_object"))
+
+        suppressed_proposals = apply_non_maximum_suppression(proposals, iou_threshold=0.38)
 
         # Ensure spatial diversity if multiple items present
         if len(suppressed_proposals) < 2 and total_area > 30000:
@@ -438,7 +483,8 @@ def detect_and_classify_objects(
             # Both models operating on shared classes
             fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
             final_cat = fused.predicted_category
-            final_conf = fused.calibrated_confidence or fused.confidence
+            # Use raw unsharpened ensemble confidence
+            final_conf = fused.confidence
             class_probs = {k: round(v, 4) for k, v in fused.class_probabilities.items()}
             is_ood = fused.is_out_of_distribution
             models_agree = fused.vit_prediction.lower() == fused.clip_prediction.lower()
@@ -450,12 +496,16 @@ def detect_and_classify_objects(
             elif not models_agree:
                 # Strong model disagreement requires review even if weighted confidence appears elevated
                 conf_status = "ambiguous"
+                final_conf = min(final_conf, 0.68)
             elif final_conf >= 0.70:
                 conf_status = "normal"
             elif final_conf >= 0.40:
                 conf_status = "ambiguous"
             else:
                 conf_status = "low_confidence"
+
+        # Cap confidence to avoid rounded 100% false certainty
+        final_conf = min(0.985, round(final_conf, 4))
 
         # 5. Intelligent Recycling Decision
         rec_decision = get_recycling_decision(
@@ -464,6 +514,7 @@ def detect_and_classify_objects(
             is_ood=is_ood,
             confidence_status=conf_status,
             item_context=label,
+            model_agreement=models_agree,
         )
 
         # Accumulate summary counts
@@ -520,6 +571,18 @@ def detect_and_classify_objects(
                 recycling_decision=RecyclingDecisionSchema(**rec_decision.to_dict()),
             )
         )
+
+    # Verify strict summary conservation invariant: sum of streams == total objects
+    sum_stream = (
+        status_counts.recyclable
+        + status_counts.conditionally_recyclable
+        + status_counts.compostable
+        + status_counts.hazardous
+        + status_counts.not_standard
+        + status_counts.unknown
+    )
+    if sum_stream != len(detected_objects):
+        logger.error("Disposal stream count mismatch: %d != %d", sum_stream, len(detected_objects))
 
     annotated_base64 = render_annotated_image(pil_image, detected_objects)
     inference_time = (time.perf_counter() - t0) * 1000.0
