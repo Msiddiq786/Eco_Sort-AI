@@ -419,27 +419,36 @@ def detect_and_classify_objects(
                 "organic": round(clip_probs.get("organic", 0.85), 4),
                 "trash": round(vit_probs.get("trash", 0.0) * 0.35 + clip_probs.get("trash", 0.0) * 0.3, 4),
             }
-            # Normalize
+            # Normalize to strictly sum to 1.0
             tot = sum(class_probs.values())
             class_probs = {k: round(v / tot, 4) for k, v in class_probs.items()}
             is_ood = False
-            conf_status = "normal" if final_conf >= 0.65 else "ambiguous"
+            # When ViT is 6-class and CLIP identifies organic, flag coverage distinction
+            conf_status = "normal" if final_conf >= 0.70 else "ambiguous"
             models_agree = False
-            vit_prediction_label = f"{vit_top} (V1 6-class)"
+            vit_prediction_label = "Not supported (V1 6-class)"
         else:
-            # Both models operating on shared 6 classes
+            # Both models operating on shared classes
             fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
             final_cat = fused.predicted_category
             final_conf = fused.calibrated_confidence or fused.confidence
             class_probs = {k: round(v, 4) for k, v in fused.class_probabilities.items()}
             is_ood = fused.is_out_of_distribution
-            conf_status = fused.confidence_status
             models_agree = fused.vit_prediction.lower() == fused.clip_prediction.lower()
             vit_prediction_label = fused.vit_prediction
 
-        # If models disagree strongly, enforce review status
-        if not models_agree and final_conf < 0.80 and conf_status == "normal":
-            conf_status = "ambiguous"
+            # Disagreement & confidence tier policy
+            if is_ood:
+                conf_status = "out_of_distribution"
+            elif not models_agree:
+                # Strong model disagreement requires review even if weighted confidence appears elevated
+                conf_status = "ambiguous"
+            elif final_conf >= 0.70:
+                conf_status = "normal"
+            elif final_conf >= 0.40:
+                conf_status = "ambiguous"
+            else:
+                conf_status = "low_confidence"
 
         # 5. Intelligent Recycling Decision
         rec_decision = get_recycling_decision(
