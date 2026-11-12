@@ -71,6 +71,13 @@ export interface BoundingBox {
   y2: number;
 }
 
+export interface ModelCoverage {
+  vit_supported: boolean;
+  clip_supported: boolean;
+  ensemble_supported: boolean;
+  unsupported_reason?: string | null;
+}
+
 export interface DetectedObject {
   object_id: number;
   bbox: BoundingBox;
@@ -84,6 +91,10 @@ export interface DetectedObject {
   calibrated_confidence: number;
   confidence_status: string;
   is_out_of_distribution?: boolean;
+  model_agreement?: boolean;
+  model_coverage?: ModelCoverage;
+  crop_width?: number;
+  crop_height?: number;
   recycling_status?: string;
   disposal_recommendation?: string;
   preparation_steps?: string[];

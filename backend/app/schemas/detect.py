@@ -16,6 +16,13 @@ class BoundingBox(BaseModel):
     y2: float = Field(..., description="Bottom coordinate")
 
 
+class ModelCoverage(BaseModel):
+    vit_supported: bool = True
+    clip_supported: bool = True
+    ensemble_supported: bool = True
+    unsupported_reason: Optional[str] = None
+
+
 class DetectedObject(BaseModel):
     object_id: int
     bbox: BoundingBox
@@ -29,6 +36,10 @@ class DetectedObject(BaseModel):
     calibrated_confidence: float = Field(..., ge=0.0, le=1.0)
     confidence_status: str
     is_out_of_distribution: bool = False
+    model_agreement: bool = True
+    model_coverage: Optional[ModelCoverage] = None
+    crop_width: Optional[int] = None
+    crop_height: Optional[int] = None
     recycling_status: str
     disposal_recommendation: str
     preparation_steps: List[str]

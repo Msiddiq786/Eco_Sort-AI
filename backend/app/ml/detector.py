@@ -38,6 +38,7 @@ from app.schemas.detect import (
     BoundingBox,
     DetectedObject,
     DetectResponse,
+    ModelCoverage,
     RecyclingStatusCounts,
     RecyclingSummary,
 )
@@ -356,7 +357,9 @@ def detect_and_classify_objects(
     # Determine ViT class capability from model config if available
     vit_num_classes = 6
     if hasattr(vit_model, "config") and hasattr(vit_model.config, "num_labels"):
-        vit_num_classes = vit_model.config.num_labels
+        val = getattr(vit_model.config, "num_labels", 6)
+        if isinstance(val, int):
+            vit_num_classes = val
 
     for idx, (bbox, det_conf, label) in enumerate(candidates, start=1):
         # 1. Individual Object Cropping with 5% padding & boundary clipping
@@ -464,6 +467,19 @@ def detect_and_classify_objects(
         else:
             status_counts.unknown += 1
 
+        crop_w = int(cx2 - cx1)
+        crop_h = int(cy2 - cy1)
+        model_cov = ModelCoverage(
+            vit_supported=(vit_num_classes >= 7 or final_cat != "organic"),
+            clip_supported=True,
+            ensemble_supported=(vit_num_classes >= 7 or final_cat != "organic"),
+            unsupported_reason=(
+                "ViT V1 is fine-tuned on 6 classes and does not natively support organic waste. Evaluated via CLIP foundation model."
+                if (vit_num_classes == 6 and final_cat == "organic")
+                else None
+            ),
+        )
+
         detected_objects.append(
             DetectedObject(
                 object_id=idx,
@@ -478,6 +494,10 @@ def detect_and_classify_objects(
                 calibrated_confidence=round(final_conf, 4),
                 confidence_status=conf_status,
                 is_out_of_distribution=is_ood,
+                model_agreement=models_agree,
+                model_coverage=model_cov,
+                crop_width=crop_w,
+                crop_height=crop_h,
                 recycling_status=rec_decision.disposal_status.value,
                 disposal_recommendation=rec_decision.action,
                 preparation_steps=rec_decision.preparation_steps,
