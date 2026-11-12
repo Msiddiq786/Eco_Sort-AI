@@ -10,6 +10,9 @@ import {
   Wrench,
   X,
   Target,
+  CheckCircle2,
+  AlertCircle,
+  Crop,
 } from 'lucide-react'
 
 interface Props {
@@ -33,6 +36,7 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
   const ringColor = isHigh ? '#16A34A' : isModerate ? '#F97316' : '#EF4444'
 
   const decision = object.recycling_decision
+  const isAgree = object.model_agreement ?? (object.vit_prediction.toLowerCase() === object.clip_prediction.toLowerCase())
 
   return (
     <div className="rounded-2xl border-2 border-emerald-500/40 bg-white p-6 shadow-lg space-y-6">
@@ -97,7 +101,7 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
                 {pctValue.toFixed(1)}%
               </span>
               <span className="text-[10px] font-medium text-slate-500 uppercase">
-                Confidence
+                Classification
               </span>
             </div>
           </div>
@@ -113,35 +117,87 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
           </h2>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
             <span className="px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-medium">
-              Detection Score: {(object.detection_confidence * 100).toFixed(0)}%
+              Spatial Detection: {(object.detection_confidence * 100).toFixed(0)}%
             </span>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
               {decision?.status_label || object.recycling_status}
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px]">
+              Status: {object.confidence_status}
             </span>
           </div>
         </div>
       </div>
 
       {/* Model Agreement row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900">
-            <Cpu className="h-4 w-4 text-emerald-600" />
-            <span>ViT (70%):</span>
-          </div>
-          <strong className="text-sm font-heading font-bold text-slate-900">
-            {capitalize(object.vit_prediction)}
-          </strong>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-slate-700 uppercase tracking-wide text-[11px]">
+            Model Ensemble Breakdown
+          </span>
+          {isAgree ? (
+            <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Full Consensus</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+              <span>Model Disagreement</span>
+            </span>
+          )}
         </div>
 
-        <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-blue-900">
-            <Layers className="h-4 w-4 text-blue-600" />
-            <span>CLIP (30%):</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 flex flex-col justify-between space-y-1">
+            <div className="flex items-center justify-between text-xs font-semibold text-emerald-900">
+              <div className="flex items-center gap-1.5">
+                <Cpu className="h-4 w-4 text-emerald-600" />
+                <span>ViT Fine-Tuned (70%):</span>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-700">
+                {object.model_coverage?.vit_supported === false ? 'No native class' : 'Active'}
+              </span>
+            </div>
+            <strong className="text-sm font-heading font-bold text-slate-900">
+              {capitalize(object.vit_prediction)}
+            </strong>
           </div>
-          <strong className="text-sm font-heading font-bold text-slate-900">
-            {capitalize(object.clip_prediction)}
-          </strong>
+
+          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3 flex flex-col justify-between space-y-1">
+            <div className="flex items-center justify-between text-xs font-semibold text-blue-900">
+              <div className="flex items-center gap-1.5">
+                <Layers className="h-4 w-4 text-blue-600" />
+                <span>CLIP Zero-Shot (30%):</span>
+              </div>
+              <span className="text-[10px] font-mono text-blue-700">
+                {object.model_coverage?.clip_supported ? 'Active V2' : 'Active'}
+              </span>
+            </div>
+            <strong className="text-sm font-heading font-bold text-slate-900">
+              {capitalize(object.clip_prediction)}
+            </strong>
+          </div>
+        </div>
+
+        {object.model_coverage?.unsupported_reason && (
+          <p className="text-[11px] text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
+            ℹ️ {object.model_coverage.unsupported_reason}
+          </p>
+        )}
+      </div>
+
+      {/* Localization & Crop details */}
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Crop className="h-4 w-4 text-slate-500" />
+          <span className="font-medium text-slate-700">Crop Dimensions:</span>
+          <span className="font-mono text-slate-900 font-semibold">
+            {object.crop_width && object.crop_height ? `${object.crop_width} × ${object.crop_height} px` : 'Auto-cropped'}
+          </span>
+        </div>
+        <div className="font-mono text-[11px] text-slate-500">
+          Bounding Box: [{object.bbox.x1}, {object.bbox.y1}, {object.bbox.x2}, {object.bbox.y2}]
         </div>
       </div>
 

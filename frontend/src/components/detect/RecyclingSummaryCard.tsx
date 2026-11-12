@@ -15,6 +15,14 @@ interface Props {
 
 export default function RecyclingSummaryCard({ summary }: Props) {
   const { total_objects, category_counts, status_counts } = summary
+  const sumStatus =
+    (status_counts.recyclable || 0) +
+    (status_counts.conditionally_recyclable || 0) +
+    (status_counts.compostable || 0) +
+    (status_counts.hazardous || 0) +
+    (status_counts.not_standard || 0) +
+    (status_counts.unknown || 0)
+  const isConsistent = sumStatus === total_objects
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-4">
@@ -31,6 +39,11 @@ export default function RecyclingSummaryCard({ summary }: Props) {
             <p className="text-xs text-slate-500">
               Total detected items:{' '}
               <strong className="text-slate-800 font-bold">{total_objects}</strong>
+              {isConsistent && (
+                <span className="ml-2 text-[11px] text-emerald-600 font-medium">
+                  ✓ {sumStatus}/{total_objects} accounted
+                </span>
+              )}
             </p>
           </div>
         </div>
