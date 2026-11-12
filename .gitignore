@@ -1,0 +1,58 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+*.env
+
+# ── Large ML / Data assets (keep out of Git) ────────────
+backend/models/vit/best/
+backend/models/vit/latest/
+backend/models/detection_v2/weights/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.weights
+backend/data/
+backend/uploads/
+backend/evaluation/results/
+backend/*.db
+backend/*.sqlite3
+*.db
+*.sqlite3
+*.sqlite
+
+# ── Node / Frontend ──────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# ── IDEs / OS ────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+*.swp
+
+# ── Testing / Coverage ───────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Misc ─────────────────────────────────────────────────
+*.log
+*.tmp

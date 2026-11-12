@@ -1,0 +1,53 @@
+# EcoSort AI V2 — 7-Class Vision Transformer Configuration
+model:
+  name: "google/vit-base-patch16-224-in21k"
+  checkpoint_dir: "models/vit_v2"
+  best_dir: "models/vit_v2/best"
+  latest_dir: "models/vit_v2/latest"
+  num_classes: 7
+  classes:
+    0: "cardboard"
+    1: "glass"
+    2: "metal"
+    3: "paper"
+    4: "plastic"
+    5: "organic"
+    6: "trash"
+
+training:
+  batch_size: 16
+  max_epochs: 20
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  early_stopping_patience: 5
+  class_weighted_loss: true
+  label_smoothing: 0.1
+  seed: 42
+
+augmentation:
+  random_resized_crop:
+    size: [224, 224]
+    scale: [0.8, 1.0]
+  color_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.05
+  random_horizontal_flip: 0.5
+  random_vertical_flip: 0.2
+  random_rotation_degrees: 15
+
+evaluation:
+  metrics:
+    - "accuracy"
+    - "balanced_accuracy"
+    - "macro_precision"
+    - "macro_recall"
+    - "macro_f1"
+    - "per_class_f1"
+    - "confusion_matrix"
+
+status:
+  training_status: "AWAITING_TRAINING"
+  notes: "V1 6-class training is actively running. V2 7-class training will be triggered only after V1 completes."
