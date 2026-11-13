@@ -384,10 +384,24 @@ def train(
         val_dir = resolve_path(data_cfg.get("val_dir", base_data_dir / "val"))
         test_dir = resolve_path(data_cfg.get("test_dir", base_data_dir / "test"))
 
-    checkpoint_dir = resolve_path(
+    raw_ckpt = resolve_path(
         checkpoint_dir_override or ckpt_cfg.get("save_dir", "backend/models/vit/best")
     )
-    latest_checkpoint_dir = checkpoint_dir.parent / "latest"
+    # Robustly resolve best and latest directories regardless of whether
+    # backend/models/vit, backend/models/vit/best, or backend/models/vit/latest is passed
+    if raw_ckpt.name == "latest":
+        latest_checkpoint_dir = raw_ckpt
+        checkpoint_dir = raw_ckpt.parent / "best"
+    elif raw_ckpt.name == "best":
+        checkpoint_dir = raw_ckpt
+        latest_checkpoint_dir = raw_ckpt.parent / "latest"
+    elif (raw_ckpt / "best").exists() or (raw_ckpt / "latest").exists() or raw_ckpt.name == "vit":
+        checkpoint_dir = raw_ckpt / "best"
+        latest_checkpoint_dir = raw_ckpt / "latest"
+    else:
+        checkpoint_dir = raw_ckpt
+        latest_checkpoint_dir = raw_ckpt.parent / "latest"
+
     results_dir = resolve_path(
         results_dir_override or eval_cfg.get("results_dir", "backend/evaluation/results")
     )
@@ -437,16 +451,63 @@ def train(
     start_epoch = 1
     if model_instance is not None:
         model = model_instance.to(device)
-    elif resume and (latest_checkpoint_dir / "config.json").exists():
-        logger.info("Resuming training from latest checkpoint '%s'...", latest_checkpoint_dir)
-        model = ViTForImageClassification.from_pretrained(str(latest_checkpoint_dir)).to(device)
-        meta_file = latest_checkpoint_dir / "training_metadata.json"
-        if meta_file.exists():
-            try:
-                meta = json.loads(meta_file.read_text(encoding="utf-8"))
-                start_epoch = int(meta.get("latest_epoch", meta.get("best_epoch", 0))) + 1
-            except Exception:
-                pass
+    elif resume:
+        # Explicit validation of resumption checkpoint prerequisites
+        logger.info("Validating latest checkpoint for safe resumption at '%s'...", latest_checkpoint_dir.resolve())
+        if not latest_checkpoint_dir.exists():
+            raise FileNotFoundError(
+                f"Resumption failed: latest checkpoint directory '{latest_checkpoint_dir.resolve()}' does not exist. "
+                "Cannot resume training without a prior checkpoint."
+            )
+        config_path = latest_checkpoint_dir / "config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Resumption failed: missing 'config.json' in '{latest_checkpoint_dir.resolve()}'."
+            )
+        weights_exist = (
+            (latest_checkpoint_dir / "model.safetensors").exists()
+            or (latest_checkpoint_dir / "pytorch_model.bin").exists()
+        )
+        if not weights_exist:
+            raise FileNotFoundError(
+                f"Resumption failed: missing model weights ('model.safetensors' or 'pytorch_model.bin') in '{latest_checkpoint_dir.resolve()}'."
+            )
+        meta_path = latest_checkpoint_dir / "training_metadata.json"
+        if not meta_path.exists():
+            raise FileNotFoundError(
+                f"Resumption failed: missing 'training_metadata.json' in '{latest_checkpoint_dir.resolve()}'."
+            )
+        opt_path = latest_checkpoint_dir / "optimizer.pt"
+        if not opt_path.exists():
+            raise FileNotFoundError(
+                f"Resumption failed: missing optimizer state '{opt_path.resolve()}'. "
+                "Resumption requires optimizer.pt to preserve AdamW momentum and learning rate state."
+            )
+        sched_path = latest_checkpoint_dir / "scheduler.pt"
+        if not sched_path.exists():
+            raise FileNotFoundError(
+                f"Resumption failed: missing scheduler state '{sched_path.resolve()}'. "
+                "Resumption requires scheduler.pt to preserve warmup and learning rate decay schedule."
+            )
+
+        logger.info("Restoring model weights from latest checkpoint '%s'...", latest_checkpoint_dir)
+        try:
+            model = ViTForImageClassification.from_pretrained(str(latest_checkpoint_dir)).to(device)
+        except Exception as exc:
+            raise RuntimeError(f"Failed to load model weights from '{latest_checkpoint_dir}': {exc}") from exc
+
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            latest_epoch = int(meta.get("latest_epoch", meta.get("best_epoch", 0)))
+            if latest_epoch <= 0:
+                raise ValueError(f"Invalid latest_epoch ({latest_epoch}) in {meta_path}")
+            start_epoch = latest_epoch + 1
+            logger.info(
+                "Verified latest checkpoint: completed epoch %d. Training will resume at start_epoch: %d.",
+                latest_epoch, start_epoch
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Failed to parse training metadata from '{meta_path}': {exc}") from exc
     else:
         logger.info("Initializing ViT base model from '%s'...", model_name)
         model = build_model(
@@ -498,14 +559,15 @@ def train(
     )
 
     # Load optimizer/scheduler state if resuming
-    if resume and (latest_checkpoint_dir / "optimizer.pt").exists():
+    if resume:
         try:
             optimizer.load_state_dict(torch.load(latest_checkpoint_dir / "optimizer.pt", map_location=device))
-            if (latest_checkpoint_dir / "scheduler.pt").exists():
-                scheduler.load_state_dict(torch.load(latest_checkpoint_dir / "scheduler.pt"))
-            logger.info("Successfully loaded optimizer & scheduler states from previous run.")
+            scheduler.load_state_dict(torch.load(latest_checkpoint_dir / "scheduler.pt", map_location=device))
+            logger.info("Successfully restored optimizer & scheduler states from previous run.")
         except Exception as exc:
-            logger.warning("Could not restore optimizer/scheduler state: %s", exc)
+            raise RuntimeError(
+                f"Failed to restore optimizer/scheduler state from '{latest_checkpoint_dir}': {exc}"
+            ) from exc
 
     # Class-weighted loss
     if use_class_weights and hasattr(train_loader.dataset, "samples") and train_loader.dataset.samples:
@@ -525,10 +587,66 @@ def train(
         start_epoch, epochs, batch_size, lr, patience, use_amp
     )
 
+    target_metric = train_cfg.get("metric_for_best_model", "accuracy")
     best_val_score = float("-inf")
     best_epoch = 0
     patience_counter = 0
     training_history: list[dict[str, Any]] = []
+
+    # Restore existing training history if available
+    history_file = results_dir / "training_history.json"
+    if history_file.exists():
+        try:
+            loaded_hist = json.loads(history_file.read_text(encoding="utf-8"))
+            if isinstance(loaded_hist, list):
+                if resume:
+                    training_history = [entry for entry in loaded_hist if entry.get("epoch", 0) < start_epoch]
+                else:
+                    training_history = loaded_hist
+                logger.info("Restored %d history record(s) from '%s'.", len(training_history), history_file)
+        except Exception as exc:
+            logger.warning("Could not load existing training history: %s", exc)
+
+    if resume:
+        # Restore best checkpoint score and best_epoch from best checkpoint metadata
+        best_meta_file = checkpoint_dir / "training_metadata.json"
+        latest_meta_file = latest_checkpoint_dir / "training_metadata.json"
+
+        if best_meta_file.exists():
+            try:
+                best_meta = json.loads(best_meta_file.read_text(encoding="utf-8"))
+                best_epoch = int(best_meta.get("best_epoch", 0))
+                if target_metric == "f1_score":
+                    best_val_score = float(best_meta.get("best_val_macro_f1", float("-inf")))
+                else:
+                    best_val_score = float(best_meta.get("best_val_accuracy", float("-inf")))
+                logger.info(
+                    "Restored best checkpoint score: %s=%.4f from epoch %d.",
+                    target_metric, best_val_score, best_epoch
+                )
+            except Exception as exc:
+                logger.warning("Could not read best checkpoint metadata: %s", exc)
+
+        # Fallback to latest_meta if best_meta did not supply best_epoch
+        if best_epoch == 0 and latest_meta_file.exists():
+            try:
+                latest_meta = json.loads(latest_meta_file.read_text(encoding="utf-8"))
+                best_epoch = int(latest_meta.get("best_epoch", 0))
+                if best_val_score == float("-inf"):
+                    best_val_score = float(latest_meta.get("best_val_accuracy", float("-inf")))
+            except Exception:
+                pass
+
+        # Restore patience counter based on epochs since best checkpoint
+        latest_completed_epoch = start_epoch - 1
+        if best_epoch > 0 and latest_completed_epoch >= best_epoch:
+            patience_counter = max(0, latest_completed_epoch - best_epoch)
+            logger.info(
+                "Restored patience counter: %d epoch(s) without improvement since best epoch %d (limit: %d).",
+                patience_counter, best_epoch, patience
+            )
+        else:
+            patience_counter = 0
 
     max_steps_per_epoch: int | None = None
     if dry_run:
@@ -654,6 +772,14 @@ def train(
             optimizer=optimizer,
             scheduler=scheduler,
         )
+
+        # Persist updated training history after each epoch for resumption recovery
+        try:
+            (results_dir / "training_history.json").write_text(
+                json.dumps(training_history, indent=2), encoding="utf-8"
+            )
+        except Exception as exc:
+            logger.warning("Could not persist intermediate training history: %s", exc)
 
         # Checkpoint selection (metric: val_macro_f1 or val_accuracy)
         current_score = val_metrics["macro_f1"] if train_cfg.get("metric_for_best_model") == "f1_score" else val_metrics["accuracy"]
