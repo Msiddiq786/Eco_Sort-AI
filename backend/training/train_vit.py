@@ -490,7 +490,7 @@ def train(
                 "Resumption requires scheduler.pt to preserve warmup and learning rate decay schedule."
             )
 
-        logger.info("Restoring model weights from latest checkpoint '%s'...", latest_checkpoint_dir)
+        logger.info("Resuming training from latest checkpoint '%s'...", latest_checkpoint_dir)
         try:
             model = ViTForImageClassification.from_pretrained(str(latest_checkpoint_dir)).to(device)
         except Exception as exc:
