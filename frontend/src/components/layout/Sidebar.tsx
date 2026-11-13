@@ -15,15 +15,15 @@ import {
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/dashboard',   label: 'Dashboard',         icon: LayoutDashboard },
-  { to: '/classify',    label: 'Classify Waste',    icon: ScanLine },
-  { to: '/detect',      label: 'Detect Objects',    icon: Crosshair, badge: 'Beta' },
-  { to: '/learning',    label: 'Learning Center',   icon: BookOpen },
-  { to: '/rewards',     label: 'Eco Rewards',       icon: Award },
-  { to: '/guide',       label: 'Disposal Guide',    icon: Compass },
-  { to: '/impact',      label: 'Impact Tracker',    icon: Leaf },
-  { to: '/history',     label: 'History & Audit',   icon: History },
-  { to: '/performance', label: 'Model Metrics',     icon: BarChart3 },
+  { to: '/dashboard',   label: 'Dashboard / Analytics', icon: LayoutDashboard },
+  { to: '/classify',    label: 'Classify Waste',        icon: ScanLine },
+  { to: '/detect',      label: 'Detect Objects',        icon: Crosshair, badge: 'Beta' },
+  { to: '/learning',    label: 'Learning Center',       icon: BookOpen },
+  { to: '/rewards',     label: 'Eco Rewards',           icon: Award },
+  { to: '/guide',       label: 'Smart Recycling Guide', icon: Compass },
+  { to: '/impact',      label: 'Impact Tracker',        icon: Leaf },
+  { to: '/history',     label: 'History & Audit',       icon: History },
+  { to: '/performance', label: 'Model Metrics',         icon: BarChart3 },
 ]
 
 export default function Sidebar() {

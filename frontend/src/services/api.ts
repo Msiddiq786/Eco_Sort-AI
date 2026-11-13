@@ -50,6 +50,24 @@ export const getHistory = (params?: {
   search?: string;
 }) => api.get<PaginatedHistory>('/history', { params }).then(r => r.data);
 
+/**
+ * Fetch all available prediction history records across pages.
+ * Used by Analytics Dashboard to guarantee calculations are based on complete real records.
+ */
+export const getAllHistory = async (): Promise<import('@/types').HistoryItem[]> => {
+  const firstPage = await getHistory({ page: 1, page_size: 100 });
+  const allItems = [...firstPage.items];
+  const total = firstPage.total;
+  let currentPage = 2;
+  while (allItems.length < total) {
+    const nextPage = await getHistory({ page: currentPage, page_size: 100 });
+    if (!nextPage.items.length) break;
+    allItems.push(...nextPage.items);
+    currentPage++;
+  }
+  return allItems;
+};
+
 export const deleteHistoryItem = (id: number) =>
   api.delete(`/history/${id}`);
 

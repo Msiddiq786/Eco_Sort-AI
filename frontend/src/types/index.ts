@@ -131,13 +131,44 @@ export interface DetectResponse {
   detection_model_status: string;
 }
 
+export type RecyclingPossibility =
+  | 'Widely Recyclable'
+  | 'Conditionally Recyclable'
+  | 'Compostable'
+  | 'Special Disposal Required'
+  | 'Residual Waste (Non-Recyclable)';
+
+export interface RecyclingGuideMaterial {
+  id: string;
+  name: string;
+  category: WasteCategoryV2 | 'hazardous' | 'dropoff';
+  recyclingPossibility: RecyclingPossibility;
+  badgeVariant: 'success' | 'warning' | 'info' | 'danger' | 'neutral';
+  description: string;
+  commonExamples: string[];
+  preparationInstructions: string[];
+  disposalMethod: {
+    binName: string;
+    binColor: string;
+    instructions: string;
+  };
+  avoidMixing: string[];
+  environmentalBenefits: string;
+  safetyWarnings?: string;
+  iconName?: string;
+}
+
+export type AnalyticsDateFilter = 'today' | '7days' | '30days' | '90days' | 'all' | 'custom';
+
 export interface HistoryItem {
   id: number;
   filename: string;
-  predicted_category: WasteCategory;
+  original_filename?: string;
+  image_path?: string;
+  predicted_category: WasteCategoryV2 | string;
   confidence: number;
-  vit_prediction: WasteCategory;
-  clip_prediction: WasteCategory;
+  vit_prediction: string;
+  clip_prediction: string;
   class_probabilities: Record<string, number>;
   created_at: string;
 }
@@ -150,9 +181,10 @@ export interface PaginatedHistory {
 }
 
 export interface CategoryStat {
-  category: WasteCategory;
+  category: WasteCategoryV2 | string;
   count: number;
   percentage: number;
+  is_recyclable?: boolean;
 }
 
 export interface StatsResponse {

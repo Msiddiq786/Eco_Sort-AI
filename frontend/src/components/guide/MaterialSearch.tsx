@@ -1,212 +1,220 @@
-import { useState } from 'react'
-import type { WasteCategory } from '@/types'
-import { capitalize, CATEGORY_COLORS } from '@/lib'
-import { Search } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import {
+  Search,
+  Filter,
+  RotateCcw,
+  Layers,
+} from 'lucide-react'
+import { RECYCLING_GUIDE_MATERIALS } from '@/data/recyclingGuideData'
+import type { RecyclingGuideMaterial } from '@/types'
+import MaterialCard from './MaterialCard'
+import MaterialDetailModal from './MaterialDetailModal'
 
-interface ItemGuide {
-  name: string
-  category: WasteCategory | 'hazardous' | 'dropoff'
-  bin: string
-  preparation: string
-  upcycleTip?: string
-}
+const CATEGORY_TABS = [
+  { id: 'all', label: 'All Categories' },
+  { id: 'cardboard', label: 'Cardboard' },
+  { id: 'glass', label: 'Glass' },
+  { id: 'metal', label: 'Metal' },
+  { id: 'paper', label: 'Paper' },
+  { id: 'plastic', label: 'Plastic' },
+  { id: 'organic', label: 'Organic' },
+  { id: 'trash', label: 'Trash' },
+  { id: 'hazardous', label: 'Special / Hazardous' },
+]
 
-export const ITEM_DATABASE: ItemGuide[] = [
-  {
-    name: 'Plastic Water / Soda Bottle (#1 PET)',
-    category: 'plastic',
-    bin: 'Plastic Recycling Bin',
-    preparation: 'Empty liquid, crush bottle flat, screw cap tightly back on.',
-    upcycleTip: 'Can be repurposed as a seedling greenhouse or bird feeder.',
-  },
-  {
-    name: 'Milk Jug & Detergent Bottle (#2 HDPE)',
-    category: 'plastic',
-    bin: 'Plastic Recycling Bin',
-    preparation: 'Rinse out remaining milk or detergent film. Keep cap on.',
-    upcycleTip: 'Heavy duty plastic makes durable garden scoops or water weights.',
-  },
-  {
-    name: 'Aluminum Beverage Can',
-    category: 'metal',
-    bin: 'Metal Recycling Bin',
-    preparation: 'Empty liquid. Quick rinse. Do not crush if your city uses optical sorters.',
-    upcycleTip: 'Infinitely recyclable back into a new can within 60 days.',
-  },
-  {
-    name: 'Tin / Steel Food Soup Can',
-    category: 'metal',
-    bin: 'Metal Recycling Bin',
-    preparation: 'Rinse clean. Place the metal lid inside the can to avoid sharp hazards.',
-    upcycleTip: 'Clean cans make excellent pencil holders or desktop organizers.',
-  },
-  {
-    name: 'Corrugated Shipping Box',
-    category: 'cardboard',
-    bin: 'Cardboard Bin',
-    preparation: 'Remove plastic tape and packing peanuts. Flatten completely.',
-    upcycleTip: 'Use as weed-blocking mulch sheet in garden beds.',
-  },
-  {
-    name: 'Greasy Pizza Box Bottom',
-    category: 'trash',
-    bin: 'Residual Trash / Organics Bin',
-    preparation: 'Tear off clean lid for cardboard recycling; put oily base in trash.',
-    upcycleTip: 'If your city has municipal compost, greasy cardboard is compostable.',
-  },
-  {
-    name: 'Wine & Beer Glass Bottle',
-    category: 'glass',
-    bin: 'Glass Recycling Bin',
-    preparation: 'Empty liquid. Remove metal caps and corks.',
-    upcycleTip: 'Glass bottles can be reused as flower vases or olive oil dispensers.',
-  },
-  {
-    name: 'Peanut Butter Glass Jar',
-    category: 'glass',
-    bin: 'Glass Recycling Bin',
-    preparation: 'Scrape clean with silicone spatula, quick rinse. Separate metal lid.',
-    upcycleTip: 'Mason jars are perfect for dry pantry staples and bulk beans.',
-  },
-  {
-    name: 'Newspaper & Magazines',
-    category: 'paper',
-    bin: 'Paper Recycling Bin',
-    preparation: 'Keep dry. Remove plastic sleeve wrappers.',
-  },
-  {
-    name: 'Office & Printer Paper',
-    category: 'paper',
-    bin: 'Paper Recycling Bin',
-    preparation: 'Keep dry. Staples do not need to be removed.',
-    upcycleTip: 'Use blank backsides of printed sheets as scratch memo paper.',
-  },
-  {
-    name: 'Plastic Grocery Shopping Bags',
-    category: 'dropoff',
-    bin: 'Supermarket Plastic Film Drop-off',
-    preparation: 'Never put loose in curbside bins. Drop at grocery store bins.',
-    upcycleTip: 'Keep in car trunk to reuse for dog walks or small bin liners.',
-  },
-  {
-    name: 'Takeout Coffee Cups',
-    category: 'trash',
-    bin: 'Residual Trash Bin',
-    preparation: 'Discard in trash. Separate plastic lid into plastic recycling.',
-  },
-  {
-    name: 'Aerosol Spray Cans (Deodorant/Hair)',
-    category: 'metal',
-    bin: 'Metal Bin (Must be 100% empty)',
-    preparation: 'Discharge all pressure. If still hissing or containing liquid, take to hazardous waste.',
-  },
-  {
-    name: 'Drinking Glass / Broken Mirror',
-    category: 'trash',
-    bin: 'Residual Trash Bin (Wrapped)',
-    preparation: 'Wrap in newspaper or cardboard to protect waste collection staff.',
-  },
-  {
-    name: 'Lithium / AA / AAA Batteries',
-    category: 'hazardous',
-    bin: 'Battery Recycling Kiosk',
-    preparation: 'Tape battery terminals with scotch tape. Never put in trash/curbside bins.',
-  },
+const STATUS_OPTIONS = [
+  'All Statuses',
+  'Widely Recyclable',
+  'Conditionally Recyclable',
+  'Compostable',
+  'Special Disposal Required',
+  'Residual Waste (Non-Recyclable)',
 ]
 
 export default function MaterialSearch() {
-  const [query, setQuery] = useState('')
-  const [selectedFilter, setSelectedFilter] = useState<string>('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [activeStatus, setActiveStatus] = useState('All Statuses')
+  const [selectedMaterial, setSelectedMaterial] = useState<RecyclingGuideMaterial | null>(null)
 
-  const filtered = ITEM_DATABASE.filter(item => {
-    const matchesQuery = item.name.toLowerCase().includes(query.toLowerCase()) ||
-      item.preparation.toLowerCase().includes(query.toLowerCase())
-    const matchesCat = selectedFilter === 'all' || item.category === selectedFilter
-    return matchesQuery && matchesCat
-  })
+  // Filter logic
+  const filteredMaterials = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim()
+
+    return RECYCLING_GUIDE_MATERIALS.filter(m => {
+      // Category filter
+      if (activeCategory !== 'all' && m.category !== activeCategory) {
+        return false
+      }
+
+      // Status filter
+      if (activeStatus !== 'All Statuses' && m.recyclingPossibility !== activeStatus) {
+        return false
+      }
+
+      // Search term filter (name, description, examples, disposal method)
+      if (q) {
+        const matchesName = m.name.toLowerCase().includes(q)
+        const matchesDesc = m.description.toLowerCase().includes(q)
+        const matchesExamples = m.commonExamples.some(ex => ex.toLowerCase().includes(q))
+        const matchesBin = m.disposalMethod.binName.toLowerCase().includes(q)
+        const matchesPrep = m.preparationInstructions.some(p => p.toLowerCase().includes(q))
+        return matchesName || matchesDesc || matchesExamples || matchesBin || matchesPrep
+      }
+
+      return true
+    })
+  }, [searchTerm, activeCategory, activeStatus])
+
+  const hasActiveFilters = searchTerm !== '' || activeCategory !== 'all' || activeStatus !== 'All Statuses'
+
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setActiveCategory('all')
+    setActiveStatus('All Statuses')
+  }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h3 className="font-heading font-bold text-lg text-slate-800">
-            Household Item Sorting Directory
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Search 15+ everyday household items for disposal guidelines and upcycling tips
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Search & Filter Toolbar */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search by material name, examples (e.g. pizza box, banana peel, milk jug, batteries)..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-600"
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-            placeholder="Type 'coffee cup', 'pizza'…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Filter Pills */}
-      <div className="flex flex-wrap gap-1.5 text-xs">
-        {['all', 'plastic', 'glass', 'metal', 'paper', 'cardboard', 'trash', 'hazardous'].map(filter => (
-          <button
-            key={filter}
-            onClick={() => setSelectedFilter(filter)}
-            className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-colors ${
-              selectedFilter === filter
-                ? 'bg-primary text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
-      </div>
-
-      {/* Item List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-        {filtered.map((item, idx) => {
-          const isStandardWaste = item.category in CATEGORY_COLORS
-          const color = isStandardWaste ? CATEGORY_COLORS[item.category] : item.category === 'hazardous' ? '#E11D48' : '#6366F1'
-          return (
-            <div
-              key={idx}
-              className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between"
+          {/* Status Dropdown */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <select
+              value={activeStatus}
+              onChange={e => setActiveStatus(e.target.value)}
+              className="py-2.5 px-3 rounded-xl border border-slate-200 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
             >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="font-semibold text-xs sm:text-sm text-slate-900 leading-snug">
-                    {item.name}
-                  </h4>
-                  <span
-                    className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
-                    style={{ background: color }}
-                  >
-                    {capitalize(item.category)}
-                  </span>
-                </div>
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700 mb-2 border border-slate-100">
-                  <span className="font-semibold block text-[11px] text-slate-500 mb-0.5">
-                    Target Bin:
-                  </span>
-                  <span className="font-bold text-slate-800">{item.bin}</span>
-                  <p className="text-[11px] text-slate-600 mt-1 leading-snug">{item.preparation}</p>
-                </div>
-              </div>
+          {/* Reset Filters button */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset
+            </button>
+          )}
+        </div>
 
-              {item.upcycleTip && (
-                <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[11px] text-emerald-800">
-                  <span className="font-bold shrink-0">💡 Upcycle:</span>
-                  <span>{item.upcycleTip}</span>
-                </div>
-              )}
-            </div>
-          )
-        })}
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {CATEGORY_TABS.map(tab => {
+            const count =
+              tab.id === 'all'
+                ? RECYCLING_GUIDE_MATERIALS.length
+                : RECYCLING_GUIDE_MATERIALS.filter(m => m.category === tab.id).length
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveCategory(tab.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+                  activeCategory === tab.id
+                    ? 'bg-emerald-600 text-white shadow-sm font-semibold'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    activeCategory === tab.id
+                      ? 'bg-emerald-700 text-white'
+                      : 'bg-slate-200/80 text-slate-600'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Results Header */}
+      <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+        <div className="flex items-center gap-1.5">
+          <Layers className="h-4 w-4 text-emerald-600" />
+          <span>
+            Showing <strong>{filteredMaterials.length}</strong> of{' '}
+            {RECYCLING_GUIDE_MATERIALS.length} verified materials
+          </span>
+        </div>
+        {hasActiveFilters && (
+          <span className="text-emerald-700 font-medium">Filters Applied</span>
+        )}
+      </div>
+
+      {/* Materials Grid */}
+      {filteredMaterials.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredMaterials.map(material => (
+            <MaterialCard
+              key={material.id}
+              material={material}
+              onSelect={setSelectedMaterial}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <Search className="h-6 w-6" />
+          </div>
+          <h3 className="font-heading font-bold text-base text-slate-800">
+            No waste materials matched your query
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            No catalog items matched "{searchTerm}" with the selected category and status filters. Try refining your keywords or clear your filters to view all 7 waste categories.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={handleClearFilters}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition shadow-sm"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset All Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Detail Modal */}
+      <MaterialDetailModal
+        material={selectedMaterial}
+        onClose={() => setSelectedMaterial(null)}
+      />
     </div>
   )
 }

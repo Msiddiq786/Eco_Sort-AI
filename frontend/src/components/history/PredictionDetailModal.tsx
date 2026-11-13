@@ -1,5 +1,5 @@
-import type { HistoryItem, WasteCategory } from '@/types'
-import { capitalize, formatPct, CATEGORY_COLORS, WASTE_CLASSES } from '@/lib'
+import { capitalize, formatPct, CATEGORY_COLORS } from '@/lib'
+import { V2_WASTE_CLASSES, type HistoryItem, type WasteCategory, type WasteCategoryV2 } from '@/types'
 import { CATEGORY_DETAILS } from '@/components/learning/CategoryInfoCard'
 import { X, Layers, Sparkles } from 'lucide-react'
 
@@ -15,6 +15,10 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
   const details = CATEGORY_DETAILS[item.predicted_category as WasteCategory]
   const probs = item.class_probabilities || {}
   const dateStr = new Date(item.created_at).toLocaleString()
+  const displayClasses: WasteCategoryV2[] =
+    probs.organic !== undefined
+      ? V2_WASTE_CLASSES
+      : (V2_WASTE_CLASSES.filter((c: string) => c !== 'organic') as WasteCategoryV2[])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
@@ -90,7 +94,7 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
               <Layers className="h-3.5 w-3.5 text-emerald-600" /> Class Probability Breakdown
             </h4>
             <div className="space-y-1.5">
-              {WASTE_CLASSES.map(cls => {
+              {displayClasses.map(cls => {
                 const prob = Number(probs[cls] ?? 0)
                 const isWinner = cls === item.predicted_category
                 return (
@@ -119,7 +123,7 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
           </div>
 
           {/* Recycling Recommendation */}
-          {details && (
+          {details ? (
             <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 space-y-1 text-xs text-emerald-950">
               <span className="font-semibold flex items-center gap-1 text-emerald-900">
                 <Sparkles className="h-3.5 w-3.5 text-emerald-700" /> Disposal Recommendation:
@@ -128,7 +132,16 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
                 Deposit in <strong>{details.binColor}</strong>. {details.preparationTip}
               </p>
             </div>
-          )}
+          ) : item.predicted_category === 'organic' ? (
+            <div className="rounded-xl bg-lime-50 border border-lime-200 p-3.5 space-y-1 text-xs text-lime-950">
+              <span className="font-semibold flex items-center gap-1 text-lime-900">
+                <Sparkles className="h-3.5 w-3.5 text-lime-700" /> Disposal Recommendation:
+              </span>
+              <p className="text-[11px] text-lime-800 leading-relaxed">
+                Deposit in <strong>Green Organics / Wet Waste Bin</strong>. Compostable food scraps and natural biomass. Remove plastic produce stickers before disposal.
+              </p>
+            </div>
+          ) : null}
 
           <div className="pt-2 flex justify-end">
             <button
