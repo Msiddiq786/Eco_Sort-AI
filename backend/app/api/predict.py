@@ -123,6 +123,7 @@ async def predict_image(
 
     if is_organic_v1_bypass:
         final_cat = "organic"
+        raw_ensemble_conf = float(clip_organic_prob)
         final_conf = min(0.985, float(clip_organic_prob))
         conf_status = "normal" if final_conf >= 0.70 else "ambiguous"
         is_ood = False
@@ -151,6 +152,7 @@ async def predict_image(
     elif clip_pred == "organic" and vit_num_classes == 6:
         # Organic predicted but confidence or margin is below threshold -> requires verification
         final_cat = "unknown"
+        raw_ensemble_conf = float(clip_organic_prob)
         final_conf = min(0.68, float(clip_organic_prob))
         conf_status = "low_confidence"
         is_ood = False
@@ -180,6 +182,7 @@ async def predict_image(
         # Dual 7-class support
         fused = fuse(vit_probs, clip_probs)
         final_cat = fused.predicted_category
+        raw_ensemble_conf = float(fused.confidence)
         final_conf = min(0.985, fused.confidence)
         vit_prediction_label = fused.vit_prediction
         clip_prediction_label = fused.clip_prediction
@@ -203,6 +206,7 @@ async def predict_image(
         # Standard 6-class shared evaluation
         fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
         final_cat = fused.predicted_category
+        raw_ensemble_conf = float(fused.confidence)
         final_conf = min(0.985, fused.confidence)
         vit_prediction_label = fused.vit_prediction
         clip_prediction_label = clip_pred
@@ -278,6 +282,7 @@ async def predict_image(
         image_path=image_path,
         predicted_category=final_cat,
         confidence=final_conf,
+        raw_ensemble_confidence=round(raw_ensemble_conf, 4),
         calibrated_confidence=final_conf,
         vit_prediction=vit_prediction_label,
         clip_prediction=clip_prediction_label,

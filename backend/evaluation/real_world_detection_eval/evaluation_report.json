@@ -1,0 +1,575 @@
+{
+  "evaluation_name": "EcoSort AI V2 Real-World Multi-Object Detection Validation",
+  "timestamp": "2026-11-22 00:29:54",
+  "total_evaluation_images": 12,
+  "blank_image_zero_verified": true,
+  "touching_objects_reliably_separated": true,
+  "performance_benchmarks": {
+    "average_proposal_time_ms": 123.44,
+    "average_total_inference_time_ms": 6478.38,
+    "average_cpu_time_ms": 18312.5,
+    "memory_working_set_mb": 1236.95
+  },
+  "aggregate_metrics": {
+    "iou_0.30": {
+      "total_ground_truth_objects": 23,
+      "total_predicted_objects": 71,
+      "true_positives": 7,
+      "false_positives": 64,
+      "false_negatives_missed": 16,
+      "detection_precision": 0.0986,
+      "detection_recall": 0.3043,
+      "mean_iou": 0.5504,
+      "mAP": 1.0,
+      "crop_classification_accuracy": 0.6667,
+      "total_duplicate_detections": 0,
+      "total_incorrectly_merged": 1,
+      "total_incorrectly_split": 1
+    },
+    "iou_0.50": {
+      "total_ground_truth_objects": 23,
+      "total_predicted_objects": 71,
+      "true_positives": 3,
+      "false_positives": 68,
+      "false_negatives_missed": 20,
+      "detection_precision": 0.0423,
+      "detection_recall": 0.1304,
+      "mean_iou": 0.7885,
+      "mAP": 1.0,
+      "crop_classification_accuracy": 1.0,
+      "total_duplicate_detections": 0,
+      "total_incorrectly_merged": 1,
+      "total_incorrectly_split": 1
+    }
+  },
+  "per_image_results": [
+    {
+      "filename": "01_isolated_metal_can.jpg",
+      "condition": "isolated_object",
+      "description": "Single isolated real reflective metal can",
+      "image_width": 400,
+      "image_height": 350,
+      "ground_truth_count": 1,
+      "detected_count": 10,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_01_isolated_metal_can.jpg",
+      "performance": {
+        "proposal_time_ms": 157.28,
+        "total_inference_time_ms": 13642.62,
+        "cpu_time_ms": 40812.5,
+        "memory_working_set_mb": 1222.18
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 10,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 1
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 10,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 1
+        }
+      }
+    },
+    {
+      "filename": "02_isolated_transparent_glass.jpg",
+      "condition": "transparent_bottle",
+      "description": "Single real transparent glass bottle on light surface",
+      "image_width": 440,
+      "image_height": 290,
+      "ground_truth_count": 1,
+      "detected_count": 9,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_02_isolated_transparent_glass.jpg",
+      "performance": {
+        "proposal_time_ms": 166.8,
+        "total_inference_time_ms": 15705.57,
+        "cpu_time_ms": 29828.12,
+        "memory_working_set_mb": 1224.36
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 9,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 9,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "03_isolated_organic_waste.jpg",
+      "condition": "organic_waste",
+      "description": "Real photographic organic food waste item",
+      "image_width": 360,
+      "image_height": 260,
+      "ground_truth_count": 1,
+      "detected_count": 4,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_03_isolated_organic_waste.jpg",
+      "performance": {
+        "proposal_time_ms": 117.26,
+        "total_inference_time_ms": 4640.68,
+        "cpu_time_ms": 13328.12,
+        "memory_working_set_mb": 1233.09
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.25,
+          "recall": 1.0,
+          "avg_iou": 0.3278,
+          "classification_accuracy": 0.0,
+          "missed_objects": 0,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "04_isolated_plastic_wrapper.jpg",
+      "condition": "plastic_wrapper",
+      "description": "Real crinkled plastic wrapper / soft packaging",
+      "image_width": 280,
+      "image_height": 220,
+      "ground_truth_count": 1,
+      "detected_count": 3,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_04_isolated_plastic_wrapper.jpg",
+      "performance": {
+        "proposal_time_ms": 52.87,
+        "total_inference_time_ms": 3921.03,
+        "cpu_time_ms": 9421.88,
+        "memory_working_set_mb": 1223.05
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 1,
+          "fp": 2,
+          "fn": 0,
+          "precision": 0.3333,
+          "recall": 1.0,
+          "avg_iou": 0.3871,
+          "classification_accuracy": 1.0,
+          "missed_objects": 0,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 3,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "05_two_separate_objects.jpg",
+      "condition": "two_separate_objects",
+      "description": "Real plastic bottle and real metal can separated horizontally",
+      "image_width": 640,
+      "image_height": 360,
+      "ground_truth_count": 2,
+      "detected_count": 7,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_05_two_separate_objects.jpg",
+      "performance": {
+        "proposal_time_ms": 244.99,
+        "total_inference_time_ms": 7911.44,
+        "cpu_time_ms": 22500.0,
+        "memory_working_set_mb": 1228.54
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 7,
+          "fn": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 7,
+          "fn": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "06_three_separate_objects.jpg",
+      "condition": "three_separate_objects",
+      "description": "Three distinct real objects: cardboard box, metal can, plastic bottle",
+      "image_width": 720,
+      "image_height": 320,
+      "ground_truth_count": 3,
+      "detected_count": 4,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_06_three_separate_objects.jpg",
+      "performance": {
+        "proposal_time_ms": 175.0,
+        "total_inference_time_ms": 4462.08,
+        "cpu_time_ms": 13843.75,
+        "memory_working_set_mb": 1228.03
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 2,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.5,
+          "recall": 0.6667,
+          "avg_iou": 0.7269,
+          "classification_accuracy": 1.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 1,
+          "fp": 3,
+          "fn": 2,
+          "precision": 0.25,
+          "recall": 0.3333,
+          "avg_iou": 0.9846,
+          "classification_accuracy": 1.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "07_touching_objects.jpg",
+      "condition": "touching_objects",
+      "description": "Real glass bottle and metal can physically touching at boundary",
+      "image_width": 560,
+      "image_height": 340,
+      "ground_truth_count": 2,
+      "detected_count": 6,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_07_touching_objects.jpg",
+      "performance": {
+        "proposal_time_ms": 185.15,
+        "total_inference_time_ms": 7044.06,
+        "cpu_time_ms": 20859.38,
+        "memory_working_set_mb": 1237.75
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 6,
+          "fn": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 6,
+          "fn": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "08_overlapping_objects.jpg",
+      "condition": "overlapping_objects",
+      "description": "Real plastic item partially occluding a cardboard item",
+      "image_width": 540,
+      "image_height": 360,
+      "ground_truth_count": 2,
+      "detected_count": 3,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_08_overlapping_objects.jpg",
+      "performance": {
+        "proposal_time_ms": 163.82,
+        "total_inference_time_ms": 3303.91,
+        "cpu_time_ms": 9906.25,
+        "memory_working_set_mb": 1229.47
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 1,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.3333,
+          "recall": 0.5,
+          "avg_iou": 0.4799,
+          "classification_accuracy": 0.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 1,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 3,
+          "fn": 2,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 2,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 1,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "09_transparent_bottles_cluster.jpg",
+      "condition": "transparent_bottles",
+      "description": "Cluster of transparent glass jar and clear plastic bottle",
+      "image_width": 520,
+      "image_height": 320,
+      "ground_truth_count": 2,
+      "detected_count": 5,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_09_transparent_bottles_cluster.jpg",
+      "performance": {
+        "proposal_time_ms": 67.56,
+        "total_inference_time_ms": 2254.14,
+        "cpu_time_ms": 7859.38,
+        "memory_working_set_mb": 1238.92
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 1,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.2,
+          "recall": 0.5,
+          "avg_iou": 0.7263,
+          "classification_accuracy": 1.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 1,
+          "fp": 4,
+          "fn": 1,
+          "precision": 0.2,
+          "recall": 0.5,
+          "avg_iou": 0.7263,
+          "classification_accuracy": 1.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "10_reflective_metal_cans.jpg",
+      "condition": "reflective_metal_cans",
+      "description": "Two reflective beverage cans with metallic specular highlights",
+      "image_width": 540,
+      "image_height": 340,
+      "ground_truth_count": 2,
+      "detected_count": 8,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_10_reflective_metal_cans.jpg",
+      "performance": {
+        "proposal_time_ms": 51.68,
+        "total_inference_time_ms": 7160.6,
+        "cpu_time_ms": 22578.12,
+        "memory_working_set_mb": 1237.92
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 1,
+          "fp": 7,
+          "fn": 1,
+          "precision": 0.125,
+          "recall": 0.5,
+          "avg_iou": 0.6546,
+          "classification_accuracy": 1.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 1,
+          "fp": 7,
+          "fn": 1,
+          "precision": 0.125,
+          "recall": 0.5,
+          "avg_iou": 0.6546,
+          "classification_accuracy": 1.0,
+          "missed_objects": 1,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "11_complex_household_garbage.jpg",
+      "condition": "complex_household_garbage",
+      "description": "Real cluttered floor scene with mixed cardboard, plastic containers, and wrappers",
+      "image_width": 512,
+      "image_height": 288,
+      "ground_truth_count": 6,
+      "detected_count": 12,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_11_complex_household_garbage.jpg",
+      "performance": {
+        "proposal_time_ms": 88.99,
+        "total_inference_time_ms": 7673.41,
+        "cpu_time_ms": 28718.75,
+        "memory_working_set_mb": 1236.94
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 12,
+          "fn": 6,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 6,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 12,
+          "fn": 6,
+          "precision": 0.0,
+          "recall": 0.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 0.0,
+          "missed_objects": 6,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    },
+    {
+      "filename": "12_blank_background.jpg",
+      "condition": "blank_background",
+      "description": "Completely empty background with zero waste objects",
+      "image_width": 500,
+      "image_height": 350,
+      "ground_truth_count": 0,
+      "detected_count": 0,
+      "visualization_path": "evaluation\\real_world_detection_eval\\visualizations\\eval_12_blank_background.jpg",
+      "performance": {
+        "proposal_time_ms": 9.91,
+        "total_inference_time_ms": 21.06,
+        "cpu_time_ms": 93.75,
+        "memory_working_set_mb": 1236.95
+      },
+      "metrics": {
+        "iou_0.30": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 1.0,
+          "missed_objects": 0,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        },
+        "iou_0.50": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "avg_iou": 0.0,
+          "classification_accuracy": 1.0,
+          "missed_objects": 0,
+          "duplicate_detections": 0,
+          "incorrectly_merged_objects": 0,
+          "incorrectly_split_objects": 0
+        }
+      }
+    }
+  ]
+}

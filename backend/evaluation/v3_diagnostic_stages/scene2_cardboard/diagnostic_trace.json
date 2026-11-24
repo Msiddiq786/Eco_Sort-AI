@@ -1,0 +1,191 @@
+{
+  "image_path": "backend/evaluation/v3_investigation_inputs/scene2_cardboard.jpg",
+  "image_size": [
+    725,
+    320
+  ],
+  "stages": {
+    "01_original": "backend\\evaluation\\v3_diagnostic_stages\\scene2_cardboard\\01_original_image.jpg",
+    "04_yolo_proposals_count": 0,
+    "02_03_morph_proposals_count": 4,
+    "contrast_proposals_count": 2,
+    "05_total_raw_proposals": 6,
+    "06_proposals_post_merge": 6,
+    "07_removed_by_iou": 0,
+    "08_removed_by_iomin": 4,
+    "09_final_accepted_count": 2
+  },
+  "accepted_objects": [
+    {
+      "object_id": 1,
+      "proposal_id": "M4",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p42",
+      "box": [
+        69.0,
+        57.0,
+        462.0,
+        263.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene2_cardboard\\10_crops\\crop_01_M4.jpg",
+      "vit_prediction": "cardboard",
+      "vit_confidence": 0.9544,
+      "vit_probabilities": {
+        "cardboard": 0.9544,
+        "glass": 0.0081,
+        "metal": 0.009,
+        "paper": 0.0101,
+        "plastic": 0.009,
+        "trash": 0.0095
+      },
+      "clip_prediction": "cardboard",
+      "clip_confidence": 0.8699,
+      "clip_probabilities": {
+        "cardboard": 0.8699,
+        "glass": 0.0007,
+        "metal": 0.0034,
+        "paper": 0.0294,
+        "plastic": 0.0262,
+        "organic": 0.0001,
+        "trash": 0.0704
+      },
+      "final_category": "cardboard",
+      "final_confidence": 0.929,
+      "ensemble_probabilities": {
+        "cardboard": 0.929,
+        "glass": 0.0059,
+        "metal": 0.0073,
+        "paper": 0.0159,
+        "plastic": 0.0141,
+        "trash": 0.0277
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 2,
+      "proposal_id": "M2",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        77.0,
+        23.0,
+        144.0,
+        52.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene2_cardboard\\10_crops\\crop_02_M2.jpg",
+      "vit_prediction": "cardboard",
+      "vit_confidence": 0.9358,
+      "vit_probabilities": {
+        "cardboard": 0.9358,
+        "glass": 0.0115,
+        "metal": 0.01,
+        "paper": 0.0123,
+        "plastic": 0.0143,
+        "trash": 0.0162
+      },
+      "clip_prediction": "cardboard",
+      "clip_confidence": 0.9981,
+      "clip_probabilities": {
+        "cardboard": 0.9981,
+        "glass": 0.0,
+        "metal": 0.0004,
+        "paper": 0.0004,
+        "plastic": 0.0,
+        "organic": 0.0001,
+        "trash": 0.001
+      },
+      "final_category": "cardboard",
+      "final_confidence": 0.9545,
+      "ensemble_probabilities": {
+        "cardboard": 0.9545,
+        "glass": 0.008,
+        "metal": 0.0071,
+        "paper": 0.0087,
+        "plastic": 0.01,
+        "trash": 0.0116
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    }
+  ],
+  "removed_iomin": [
+    {
+      "id": "M3",
+      "coords": [
+        66.0,
+        56.0,
+        648.0,
+        264.0
+      ],
+      "score": 0.523,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M4"
+    },
+    {
+      "id": "M1",
+      "coords": [
+        66.0,
+        1.0,
+        651.0,
+        264.0
+      ],
+      "score": 0.522,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M4"
+    },
+    {
+      "id": "C6",
+      "coords": [
+        69.0,
+        0.0,
+        650.0,
+        263.0
+      ],
+      "score": 0.416,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M4"
+    },
+    {
+      "id": "C5",
+      "coords": [
+        66.0,
+        0.0,
+        651.0,
+        264.0
+      ],
+      "score": 0.413,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M4"
+    }
+  ],
+  "removed_iou": []
+}

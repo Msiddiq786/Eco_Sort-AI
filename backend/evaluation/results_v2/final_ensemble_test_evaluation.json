@@ -1,0 +1,423 @@
+{
+  "dataset": "backend/data/test",
+  "sample_count": 440,
+  "evaluation_time_seconds": 130.82,
+  "device": "CPU",
+  "vit_v2": {
+    "name": "ViT_V2_7Class",
+    "accuracy": 0.9136,
+    "macro_f1": 0.8993,
+    "weighted_f1": 0.9148,
+    "ece": 0.34,
+    "mce": 0.4159,
+    "brier_score": 0.2658,
+    "normalization_audit": {
+      "max_deviation_from_one": 2.384185791015625e-07,
+      "average_deviation_from_one": 4.294243893809835e-08,
+      "strictly_normalized": true
+    },
+    "per_class": {
+      "cardboard": {
+        "precision": 0.9655,
+        "recall": 0.9333,
+        "f1": 0.9492,
+        "support": 60
+      },
+      "glass": {
+        "precision": 0.9091,
+        "recall": 0.9211,
+        "f1": 0.915,
+        "support": 76
+      },
+      "metal": {
+        "precision": 0.8806,
+        "recall": 0.9516,
+        "f1": 0.9147,
+        "support": 62
+      },
+      "paper": {
+        "precision": 0.9535,
+        "recall": 0.9213,
+        "f1": 0.9371,
+        "support": 89
+      },
+      "plastic": {
+        "precision": 0.9333,
+        "recall": 0.7671,
+        "f1": 0.8421,
+        "support": 73
+      },
+      "organic": {
+        "precision": 0.9836,
+        "recall": 1.0,
+        "f1": 0.9917,
+        "support": 60
+      },
+      "trash": {
+        "precision": 0.6129,
+        "recall": 0.95,
+        "f1": 0.7451,
+        "support": 20
+      }
+    },
+    "confusion_matrix": [
+      [
+        56,
+        0,
+        0,
+        3,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        70,
+        2,
+        0,
+        4,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        59,
+        0,
+        0,
+        0,
+        3
+      ],
+      [
+        2,
+        0,
+        1,
+        82,
+        0,
+        1,
+        3
+      ],
+      [
+        0,
+        7,
+        4,
+        1,
+        56,
+        0,
+        5
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        60,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        19
+      ]
+    ],
+    "cardboard_pred_paper": 3,
+    "paper_pred_cardboard": 2,
+    "glass_pred_plastic": 4,
+    "plastic_pred_glass": 7,
+    "organic_performance": {
+      "precision": 0.9836,
+      "recall": 1.0,
+      "f1": 0.9917,
+      "support": 60
+    },
+    "trash_performance": {
+      "precision": 0.6129,
+      "recall": 0.95,
+      "f1": 0.7451,
+      "support": 20
+    }
+  },
+  "clip_v2": {
+    "name": "CLIP_V2_Centroid",
+    "accuracy": 0.7705,
+    "macro_f1": 0.7032,
+    "weighted_f1": 0.7687,
+    "ece": 0.0259,
+    "mce": 0.2835,
+    "brier_score": 0.3329,
+    "normalization_audit": {
+      "max_deviation_from_one": 2.220446049250313e-16,
+      "average_deviation_from_one": 2.97741629331292e-17,
+      "strictly_normalized": true
+    },
+    "per_class": {
+      "cardboard": {
+        "precision": 0.9107,
+        "recall": 0.85,
+        "f1": 0.8793,
+        "support": 60
+      },
+      "glass": {
+        "precision": 0.8451,
+        "recall": 0.7895,
+        "f1": 0.8163,
+        "support": 76
+      },
+      "metal": {
+        "precision": 0.6962,
+        "recall": 0.8871,
+        "f1": 0.7801,
+        "support": 62
+      },
+      "paper": {
+        "precision": 0.8539,
+        "recall": 0.8539,
+        "f1": 0.8539,
+        "support": 89
+      },
+      "plastic": {
+        "precision": 0.6703,
+        "recall": 0.8356,
+        "f1": 0.7439,
+        "support": 73
+      },
+      "organic": {
+        "precision": 0.9429,
+        "recall": 0.55,
+        "f1": 0.6947,
+        "support": 60
+      },
+      "trash": {
+        "precision": 0.1579,
+        "recall": 0.15,
+        "f1": 0.1538,
+        "support": 20
+      }
+    },
+    "confusion_matrix": [
+      [
+        51,
+        0,
+        3,
+        5,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        60,
+        3,
+        0,
+        13,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        55,
+        1,
+        4,
+        0,
+        0
+      ],
+      [
+        3,
+        0,
+        2,
+        76,
+        4,
+        1,
+        3
+      ],
+      [
+        1,
+        8,
+        2,
+        0,
+        61,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        11,
+        3,
+        1,
+        33,
+        11
+      ],
+      [
+        1,
+        0,
+        3,
+        4,
+        8,
+        1,
+        3
+      ]
+    ],
+    "cardboard_pred_paper": 5,
+    "paper_pred_cardboard": 3,
+    "glass_pred_plastic": 13,
+    "plastic_pred_glass": 8,
+    "organic_performance": {
+      "precision": 0.9429,
+      "recall": 0.55,
+      "f1": 0.6947,
+      "support": 60
+    },
+    "trash_performance": {
+      "precision": 0.1579,
+      "recall": 0.15,
+      "f1": 0.1538,
+      "support": 20
+    }
+  },
+  "ensemble_70_30": {
+    "name": "Ensemble_70ViT_30CLIP",
+    "accuracy": 0.9091,
+    "macro_f1": 0.8895,
+    "weighted_f1": 0.9092,
+    "ece": 0.3025,
+    "mce": 0.4218,
+    "brier_score": 0.2437,
+    "normalization_audit": {
+      "max_deviation_from_one": 3.3306690738754696e-16,
+      "average_deviation_from_one": 6.207156001313375e-17,
+      "strictly_normalized": true
+    },
+    "per_class": {
+      "cardboard": {
+        "precision": 0.9492,
+        "recall": 0.9333,
+        "f1": 0.9412,
+        "support": 60
+      },
+      "glass": {
+        "precision": 0.9041,
+        "recall": 0.8684,
+        "f1": 0.8859,
+        "support": 76
+      },
+      "metal": {
+        "precision": 0.8857,
+        "recall": 1.0,
+        "f1": 0.9394,
+        "support": 62
+      },
+      "paper": {
+        "precision": 0.9765,
+        "recall": 0.9326,
+        "f1": 0.954,
+        "support": 89
+      },
+      "plastic": {
+        "precision": 0.8406,
+        "recall": 0.7945,
+        "f1": 0.8169,
+        "support": 73
+      },
+      "organic": {
+        "precision": 0.9836,
+        "recall": 1.0,
+        "f1": 0.9917,
+        "support": 60
+      },
+      "trash": {
+        "precision": 0.6522,
+        "recall": 0.75,
+        "f1": 0.6977,
+        "support": 20
+      }
+    },
+    "confusion_matrix": [
+      [
+        56,
+        0,
+        1,
+        2,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        66,
+        3,
+        0,
+        7,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        62,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        83,
+        1,
+        1,
+        3
+      ],
+      [
+        1,
+        7,
+        3,
+        0,
+        58,
+        0,
+        4
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        60,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        3,
+        0,
+        15
+      ]
+    ],
+    "cardboard_pred_paper": 2,
+    "paper_pred_cardboard": 1,
+    "glass_pred_plastic": 7,
+    "plastic_pred_glass": 7,
+    "organic_performance": {
+      "precision": 0.9836,
+      "recall": 1.0,
+      "f1": 0.9917,
+      "support": 60
+    },
+    "trash_performance": {
+      "precision": 0.6522,
+      "recall": 0.75,
+      "f1": 0.6977,
+      "support": 20
+    }
+  }
+}

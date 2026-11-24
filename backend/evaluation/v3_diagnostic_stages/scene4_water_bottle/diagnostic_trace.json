@@ -1,0 +1,304 @@
+{
+  "image_path": "backend/evaluation/v3_investigation_inputs/scene4_bottle.jpg",
+  "image_size": [
+    185,
+    250
+  ],
+  "stages": {
+    "01_original": "backend\\evaluation\\v3_diagnostic_stages\\scene4_water_bottle\\01_original_image.jpg",
+    "04_yolo_proposals_count": 3,
+    "02_03_morph_proposals_count": 10,
+    "contrast_proposals_count": 5,
+    "05_total_raw_proposals": 18,
+    "06_proposals_post_merge": 13,
+    "07_removed_by_iou": 0,
+    "08_removed_by_iomin": 12,
+    "09_final_accepted_count": 1
+  },
+  "accepted_objects": [
+    {
+      "object_id": 1,
+      "proposal_id": "Y1",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_bottle",
+      "box": [
+        48.4,
+        0.4,
+        176.1,
+        189.7
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene4_water_bottle\\10_crops\\crop_01_Y1.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.875,
+      "vit_probabilities": {
+        "cardboard": 0.0334,
+        "glass": 0.0258,
+        "metal": 0.0207,
+        "paper": 0.0204,
+        "plastic": 0.875,
+        "trash": 0.0247
+      },
+      "clip_prediction": "plastic",
+      "clip_confidence": 0.7145,
+      "clip_probabilities": {
+        "cardboard": 0.0013,
+        "glass": 0.2498,
+        "metal": 0.0314,
+        "paper": 0.0008,
+        "plastic": 0.7145,
+        "organic": 0.0,
+        "trash": 0.0021
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.8269,
+      "ensemble_probabilities": {
+        "cardboard": 0.0238,
+        "glass": 0.093,
+        "metal": 0.0239,
+        "paper": 0.0145,
+        "plastic": 0.8269,
+        "trash": 0.0179
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    }
+  ],
+  "removed_iomin": [
+    {
+      "id": "Y2",
+      "coords": [
+        51.538204193115234,
+        0.27205944061279297,
+        146.29904174804688,
+        180.0
+      ],
+      "score": 0.585,
+      "label": "yolo_bottle_merged",
+      "source": "yolo",
+      "merged_with": [
+        "M12",
+        "C16"
+      ],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M4",
+      "coords": [
+        20.0,
+        1.0,
+        184.0,
+        193.0
+      ],
+      "score": 0.547,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M10",
+      "coords": [
+        51.0,
+        1.0,
+        145.0,
+        137.0
+      ],
+      "score": 0.569,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M13",
+      "coords": [
+        54.0,
+        1.0,
+        145.0,
+        128.0
+      ],
+      "score": 0.562,
+      "label": "morph_p42",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M5",
+      "coords": [
+        63.0,
+        1.0,
+        123.0,
+        113.0
+      ],
+      "score": 0.575,
+      "label": "morph_p15_merged",
+      "source": "morphology",
+      "merged_with": [
+        "M6",
+        "M7",
+        "M9"
+      ],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M11",
+      "coords": [
+        76.0,
+        2.0,
+        123.0,
+        20.0
+      ],
+      "score": 0.586,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C15",
+      "coords": [
+        13.0,
+        0.0,
+        185.0,
+        192.0
+      ],
+      "score": 0.434,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C18",
+      "coords": [
+        13.0,
+        0.0,
+        185.0,
+        192.0
+      ],
+      "score": 0.434,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "M8",
+      "coords": [
+        104.0,
+        55.0,
+        138.0,
+        77.0
+      ],
+      "score": 0.554,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C17",
+      "coords": [
+        77.0,
+        0.0,
+        122.0,
+        24.0
+      ],
+      "score": 0.322,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C14",
+      "coords": [
+        76.0,
+        0.0,
+        123.0,
+        25.0
+      ],
+      "score": 0.317,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "Y3",
+      "coords": [
+        8.980509757995605,
+        11.081337928771973,
+        185.0,
+        193.10391235351562
+      ],
+      "score": 0.13,
+      "label": "yolo_dining table",
+      "source": "yolo",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    }
+  ],
+  "removed_iou": []
+}

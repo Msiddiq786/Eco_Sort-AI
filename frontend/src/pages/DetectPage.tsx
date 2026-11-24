@@ -103,7 +103,7 @@ export default function DetectPage() {
 
           {/* Interactive Bounding Box Viewer */}
           <AnnotatedImageViewer
-            imageBase64={result.annotated_image_base64}
+            imageBase64={result.clean_image_base64 || result.annotated_image_base64}
             imageWidth={result.image_width}
             imageHeight={result.image_height}
             objects={result.objects}

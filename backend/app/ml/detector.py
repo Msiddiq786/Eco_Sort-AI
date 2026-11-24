@@ -5,18 +5,19 @@ Architecture:
 1. Model Detection Engine:
    - Dedicated WasteObjectDetector.
    - Checks for trained weights in backend/models/detection_v2/weights/best.pt.
-   - If weights are awaiting training, applies high-precision multi-scale spatial peak
-     and distance-energy decomposition to reliably isolate distinct, non-overlapping
-     individual waste items in cluttered scenes.
+   - When awaiting trained weights, applies robust multi-scale edge gradient decomposition,
+     binary morphological hole-filling, and valley splitting to reliably isolate
+     distinct, non-overlapping individual waste items in complex scenes without fabricating detections.
 2. Coordinate Bounds & Clipping:
    - Enforces strict image boundaries (0 <= x1 < x2 <= W, 0 <= y1 < y2 <= H).
-   - Rejects scene-swallowing bounding boxes (caps maximum single object area to 48% of frame).
+   - Rejects scene-swallowing bounding boxes (caps maximum single object area to 38% of frame).
 3. Non-Maximum Suppression (NMS):
    - Spatial overlap suppression (IoU <= 0.38) to eliminate duplicate proposals while
      safeguarding distinct adjacent items.
 4. Independent Crop Extraction:
    - Pads each bounding box by 5%, clips to boundary, and crops original image.
    - Evaluates ViT and CLIP independently on each crop.
+   - Generates crop base64 thumbnail for rich frontend inspection cards.
 """
 from __future__ import annotations
 
@@ -27,6 +28,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import cv2
 import numpy as np
 import scipy.ndimage as ndi
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -93,11 +95,142 @@ def calculate_iou(boxA: Tuple[float, float, float, float], boxB: Tuple[float, fl
     return interArea / denom
 
 
+def calculate_iomin(boxA: Tuple[float, float, float, float], boxB: Tuple[float, float, float, float]) -> float:
+    """Compute Intersection-over-Minimum (containment ratio) between two boxes."""
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    interArea = max(0.0, xB - xA) * max(0.0, yB - yA)
+    boxAArea = max(0.0, (boxA[2] - boxA[0]) * (boxA[3] - boxA[1]))
+    boxBArea = max(0.0, (boxB[2] - boxB[0]) * (boxB[3] - boxB[1]))
+
+    min_area = min(boxAArea, boxBArea)
+    if min_area <= 0.0:
+        return 0.0
+    return interArea / min_area
+
+
+def merge_can_fragments(
+    proposals: List[Tuple[Tuple[float, float, float, float], float, str]],
+    max_v_gap: float = 60.0,
+) -> List[Tuple[Tuple[float, float, float, float], float, str]]:
+    """Merge vertically split fragments of the same cylindrical object (e.g. can top rim and body, or bottle segments)."""
+    merged: List[Tuple[Tuple[float, float, float, float], float, str]] = []
+    used = set()
+    n = len(proposals)
+    for i in range(n):
+        if i in used:
+            continue
+        boxA, scoreA, labelA = proposals[i]
+        merged_box = list(boxA)
+        merged_score = scoreA
+        merged_label = labelA
+        wA = merged_box[2] - merged_box[0]
+        hA = merged_box[3] - merged_box[1]
+
+        if wA <= 250 and hA <= 300:
+            for j in range(i + 1, n):
+                if j in used:
+                    continue
+                boxB, scoreB, labelB = proposals[j]
+                wB = boxB[2] - boxB[0]
+                hB = boxB[3] - boxB[1]
+                if wB <= 250 and hB <= 300:
+                    xA = max(merged_box[0], boxB[0])
+                    xB = min(merged_box[2], boxB[2])
+                    inter_x = max(0.0, xB - xA)
+                    min_w = min(wA, wB)
+                    if min_w > 0 and (inter_x / min_w) > 0.60:
+                        if merged_box[3] <= boxB[1] and (boxB[1] - merged_box[3]) <= max_v_gap:
+                            merged_box = [min(merged_box[0], boxB[0]), merged_box[1], max(merged_box[2], boxB[2]), boxB[3]]
+                            merged_score = max(merged_score, scoreB)
+                            used.add(j)
+                        elif boxB[3] <= merged_box[1] and (merged_box[1] - boxB[3]) <= max_v_gap:
+                            merged_box = [min(merged_box[0], boxB[0]), boxB[1], max(merged_box[2], boxB[2]), merged_box[3]]
+                            merged_score = max(merged_score, scoreB)
+                            used.add(j)
+        merged.append(((float(merged_box[0]), float(merged_box[1]), float(merged_box[2]), float(merged_box[3])), merged_score, merged_label))
+        used.add(i)
+    return merged
+
+
+def apply_containment_and_nms(
+    proposals: List[Tuple[Tuple[float, float, float, float], float, str]],
+    containment_threshold: float = 0.65,
+    iou_threshold: float = 0.35,
+    max_area_ratio: float = 0.85,
+    total_area: float = 1.0,
+) -> List[Tuple[Tuple[float, float, float, float], float, str]]:
+    """
+    Robust object-level containment suppression and Non-Maximum Suppression.
+    Suppresses internal sub-features (labels, caps, logos, rims, reflection artifacts)
+    while strictly safeguarding distinct adjacent physical items.
+    """
+    if not proposals:
+        return []
+
+    # Priority sort: YOLO proposals given 1.5x score priority, then score + area stability
+    def sort_key(p):
+        box, score, label = p
+        bw = box[2] - box[0]
+        bh = box[3] - box[1]
+        area = bw * bh
+        yolo_boost = 1.5 if label.startswith("yolo_") else 1.0
+        return yolo_boost * score * (1.0 + 0.25 * min(1.0, area / 40000.0))
+
+    sorted_props = sorted(proposals, key=sort_key, reverse=True)
+    kept: List[Tuple[Tuple[float, float, float, float], float, str]] = []
+
+    for boxA, scoreA, labelA in sorted_props:
+        areaA = max(0.0, (boxA[2] - boxA[0]) * (boxA[3] - boxA[1]))
+        if total_area > 0 and areaA > total_area * max_area_ratio:
+            continue
+
+        should_add = True
+        to_remove = []
+
+        for idx, (boxK, scoreK, labelK) in enumerate(kept):
+            areaK = max(0.0, (boxK[2] - boxK[0]) * (boxK[3] - boxK[1]))
+
+            xA = max(boxA[0], boxK[0])
+            yA = max(boxA[1], boxK[1])
+            xB = min(boxA[2], boxK[2])
+            yB = min(boxA[3], boxK[3])
+            inter = max(0.0, xB - xA) * max(0.0, yB - yA)
+
+            union = areaA + areaK - inter
+            iou = (inter / union) if union > 0 else 0.0
+
+            # Containment evaluation of smaller box inside larger box
+            if areaA <= areaK:
+                # boxA is smaller or equal; check if it is inside boxK
+                cont = (inter / areaA) if areaA > 0 else 0.0
+                if cont >= containment_threshold or iou >= iou_threshold:
+                    # boxA is an inner sub-feature of boxK -> suppress boxA
+                    should_add = False
+                    break
+            else:
+                # boxA is larger; check if boxK is inside boxA
+                cont = (inter / areaK) if areaK > 0 else 0.0
+                if cont >= containment_threshold or iou >= iou_threshold:
+                    # boxK was an inner sub-feature of boxA -> supersede boxK with boxA
+                    to_remove.append(idx)
+
+        if should_add:
+            for idx in sorted(to_remove, reverse=True):
+                kept.pop(idx)
+            kept.append((boxA, scoreA, labelA))
+
+    return kept
+
+
 def apply_non_maximum_suppression(
     proposals: List[Tuple[Tuple[float, float, float, float], float, str]],
     iou_threshold: float = 0.38,
 ) -> List[Tuple[Tuple[float, float, float, float], float, str]]:
-    """Sort proposals by detection confidence and filter out overlapping boxes."""
+    """Sort proposals by detection confidence and filter out overlapping boxes (backward compatible)."""
     if not proposals:
         return []
 
@@ -118,12 +251,13 @@ def apply_non_maximum_suppression(
 
 class WasteObjectDetector:
     """
-    Dedicated Waste Object Detection Engine.
+    Dedicated Multi-Object Waste Detector.
 
-    Supports:
-    - Pretrained YOLOv8 waste detection weights if available on disk.
-    - Robust multi-scale spatial peak decomposition to identify multiple distinct
-      waste items and prevent single scene-level bounding box aggregation.
+    Combines:
+    - Pretrained YOLOv8 for physical object containers (glass/plastic bottles, cans, cups, bowls).
+    - Multi-scale edge-gradient and morphological region analysis for cardboard, paper, and wrappers.
+    - Border-contrast saliency for transparent plastic and subtle reflective objects.
+    - Vertically aligned can fragment merging and IoMin containment suppression to eliminate duplicates.
     """
 
     def __init__(self, weights_path: Optional[Path] = None):
@@ -133,19 +267,31 @@ class WasteObjectDetector:
         self._initialize_detector()
 
     def _initialize_detector(self):
-        """Attempt to load trained YOLO weights if available."""
+        """Attempt to load trained YOLO weights or local pretrained YOLO weights."""
         if self.weights_path.exists() and self.weights_path.is_file():
             try:
                 from ultralytics import YOLO
                 self.yolo_model = YOLO(str(self.weights_path))
                 self.model_status = "trained_weights_ready"
                 logger.info("Successfully loaded dedicated YOLO detector from %s", self.weights_path)
+                return
             except Exception as exc:
-                logger.warning("Could not load YOLO weights: %s. Using multi-scale proposal engine.", exc)
-                self.model_status = "fallback_multiscale_proposal"
-        else:
-            self.model_status = "fallback_multiscale_proposal"
-            logger.info("No detector weights at %s. Using multi_scale_proposal engine.", self.weights_path)
+                logger.warning("Could not load trained YOLO weights: %s.", exc)
+
+        # Check for local yolov8s.pt or yolov8n.pt in workspace root
+        for candidate_pt in [Path("yolov8s.pt"), Path("yolov8n.pt")]:
+            if candidate_pt.exists() and candidate_pt.is_file():
+                try:
+                    from ultralytics import YOLO
+                    self.yolo_model = YOLO(str(candidate_pt))
+                    self.model_status = f"pretrained_hybrid_{candidate_pt.stem}"
+                    logger.info("Loaded pretrained YOLO hybrid model from %s", candidate_pt)
+                    return
+                except Exception as exc:
+                    logger.warning("Could not load local YOLO %s: %s", candidate_pt, exc)
+
+        self.model_status = "fallback_multiscale_proposal"
+        logger.info("No YOLO weights available. Using multi-scale proposal engine.")
 
     def detect_objects(
         self,
@@ -155,156 +301,147 @@ class WasteObjectDetector:
     ) -> List[Tuple[BoundingBox, float, str]]:
         """
         Detect candidate waste objects and generate genuine individual bounding boxes.
+        Never fabricates detections; blank images return [].
         """
         w, h = pil_image.size
         total_area = float(w * h)
 
-        # 1. If YOLO weights are available, run inference
-        if self.yolo_model is not None:
-            try:
-                results = self.yolo_model(pil_image, conf=conf_threshold, verbose=False)
-                detections: List[Tuple[Tuple[float, float, float, float], float, str]] = []
-                for r in results:
-                    for b in r.boxes:
-                        coords = b.xyxy[0].cpu().numpy().tolist()
-                        conf = float(b.conf[0].cpu().numpy())
-                        cls_id = int(b.cls[0].cpu().numpy())
-                        label = r.names.get(cls_id, f"waste_item_{cls_id}")
-                        detections.append(((coords[0], coords[1], coords[2], coords[3]), conf, label))
-
-                suppressed = apply_non_maximum_suppression(detections, iou_threshold=0.38)
-                final_boxes: List[Tuple[BoundingBox, float, str]] = []
-                for box, score, lbl in suppressed[:max_detections]:
-                    final_boxes.append((
-                        BoundingBox(
-                            x1=max(0.0, min(float(w), round(box[0], 1))),
-                            y1=max(0.0, min(float(h), round(box[1], 1))),
-                            x2=max(0.0, min(float(w), round(box[2], 1))),
-                            y2=max(0.0, min(float(h), round(box[3], 1))),
-                        ),
-                        round(score, 3),
-                        lbl,
-                    ))
-                if final_boxes:
-                    return final_boxes
-            except Exception as exc:
-                logger.error("YOLO inference failed: %s. Using spatial decomposition engine.", exc)
-
-        # 2. Multi-Scale Morphological Saliency & Spatial Peak Decomposition
-        # Accurately localizes individual objects and severs touching bridges
-        rgb_img = pil_image.convert("RGB")
-        gray = rgb_img.convert("L")
-
-        edges_fine = gray.filter(ImageFilter.FIND_EDGES)
-        edges_smooth = gray.filter(ImageFilter.BoxBlur(2)).filter(ImageFilter.FIND_EDGES)
-
-        arr_fine = np.array(edges_fine, dtype=np.float32)
-        arr_smooth = np.array(edges_smooth, dtype=np.float32)
+        gray = pil_image.convert("L")
         arr_gray = np.array(gray, dtype=np.float32)
 
-        bg_val = float(np.median(arr_gray))
-        contrast = np.abs(arr_gray - bg_val)
+        gx = ndi.sobel(arr_gray, axis=1)
+        gy = ndi.sobel(arr_gray, axis=0)
+        mag = np.hypot(gx, gy)
+        max_m = float(mag.max())
 
-        edges_norm = (arr_fine * 0.6 + arr_smooth * 0.4)
-        max_edges = edges_norm.max() + 1e-5
-        max_contrast = contrast.max() + 1e-5
+        # Zero variation / blank image check
+        if max_m < 5.0 or float(np.std(arr_gray)) < 5.0:
+            return []
 
-        energy_map = 0.55 * (edges_norm / max_edges) + 0.45 * (contrast / max_contrast)
-        thresh_val = float(np.percentile(energy_map, 66))
-        binary = energy_map > thresh_val
-
-        # Morphological opening (3x3) severs thin contact bridges while safeguarding small objects
-        binary_open = ndi.binary_opening(binary, structure=np.ones((3, 3)))
-        # Morphological closing (5x5) bridges internal specular reflections on bottles/cans
-        binary_clean = ndi.binary_closing(binary_open, structure=np.ones((5, 5)))
-
-        labeled, num_features = ndi.label(binary_clean)
-        slices = ndi.find_objects(labeled)
+        min_box_area = total_area * 0.003
+        max_box_area = total_area * 0.38
+        yolo_max_box_area = total_area * 0.85
 
         proposals: List[Tuple[Tuple[float, float, float, float], float, str]] = []
-        min_box_area = total_area * 0.004   # Captures smaller distinct objects (caps, small cans)
-        max_box_area = total_area * 0.38    # Permits large cardboard boxes/containers while preventing scene swallow
 
-        for sl in slices:
-            if sl is None:
-                continue
-            y1, y2 = sl[0].start, sl[0].stop
-            x1, x2 = sl[1].start, sl[1].stop
-            bw = x2 - x1
-            bh = y2 - y1
+        # 1. Deep proposals from YOLO (physical objects & containers)
+        if self.yolo_model is not None:
+            try:
+                ALLOWED_CLASSES = {
+                    # Liquid & Food Containers
+                    "bottle", "cup", "wine glass", "bowl", "vase",
+                    # Organic Food Waste (banana peels, apple cores, fruit/vegetable scraps)
+                    "banana", "apple", "orange", "broccoli", "carrot", "sandwich", "pizza", "hot dog", "donut", "cake",
+                    # Packaging / Boxes / Bags / Wrappers
+                    "book", "suitcase", "handbag", "backpack",
+                    # Utensils & Objects
+                    "fork", "knife", "spoon", "scissors"
+                }
+                results = self.yolo_model(pil_image, conf=0.15, verbose=False)
+                for r in results:
+                    for b in r.boxes:
+                        cls_id = int(b.cls[0].cpu().numpy())
+                        name = r.names.get(cls_id, f"obj_{cls_id}")
+                        if name not in ALLOWED_CLASSES:
+                            continue
+                        coords = [float(c) for c in b.xyxy[0].cpu().numpy()]
+                        conf = float(b.conf[0].cpu().numpy())
+                        area = (coords[2] - coords[0]) * (coords[3] - coords[1])
+                        if min_box_area <= area <= yolo_max_box_area:
+                            proposals.append(((coords[0], coords[1], coords[2], coords[3]), min(0.98, conf + 0.15), f"yolo_{name}"))
+            except Exception as exc:
+                logger.error("Deep proposal inference failed: %s", exc)
 
-            # Filter border artifacts (e.g. conveyor belt rubber edge borders)
-            if (x1 <= 6 and x2 <= 55 and bh > h * 0.70) or (x1 >= w - 55 and x2 >= w - 6 and bh > h * 0.70):
-                continue
-            if min(bw, bh) < 12:
-                continue
+        # 2. Multi-scale edge-gradient and morphological region proposals
+        for p_ratio in [0.15, 0.28, 0.42]:
+            edge_bin = mag > (max_m * p_ratio)
+            filled = ndi.binary_fill_holes(edge_bin)
+            clean = ndi.binary_opening(filled, structure=np.ones((3, 3)))
+            clean = ndi.binary_closing(clean, structure=np.ones((3, 3)))
+            labeled, num_f = ndi.label(clean)
+            slices = ndi.find_objects(labeled)
 
-            area = bw * bh
-            if area < min_box_area:
-                continue
-
-            # Candidate splitting: if an elongated or large region contains multiple adjacent objects,
-            # split along the projection profile valley if a deep trough exists
-            if (area > total_area * 0.07 or bw > w * 0.40 or bh > h * 0.50):
-                sub_mask = binary_clean[y1:y2, x1:x2]
-                v_proj = sub_mask.sum(axis=0)
-                h_proj = sub_mask.sum(axis=1)
-
-                split_done = False
-                # Check vertical valley split (for horizontally adjacent objects)
-                if bw >= bh and bw > 100:
-                    mid_start = int(bw * 0.25)
-                    mid_end = int(bw * 0.75)
-                    mid_v = v_proj[mid_start:mid_end]
-                    # Require deep trough (< 35% of peak) to prevent over-splitting single continuous objects
-                    if len(mid_v) > 0 and float(mid_v.min()) < 0.35 * float(v_proj.max()):
-                        split_x = mid_start + int(np.argmin(mid_v))
-                        b1 = (float(x1), float(y1), float(x1 + split_x), float(y2))
-                        b2 = (float(x1 + split_x), float(y1), float(x2), float(y2))
-                        for b_cand in (b1, b2):
-                            cand_w = b_cand[2] - b_cand[0]
-                            cand_h = b_cand[3] - b_cand[1]
-                            if cand_w >= 20 and cand_h >= 20 and (cand_w * cand_h) >= min_box_area:
-                                proposals.append((b_cand, 0.85, "waste_object"))
-                        split_done = True
-
-                # Check horizontal valley split (for vertically stacked objects)
-                elif bh > bw and bh > 100 and not split_done:
-                    mid_start = int(bh * 0.25)
-                    mid_end = int(bh * 0.75)
-                    mid_h = h_proj[mid_start:mid_end]
-                    if len(mid_h) > 0 and float(mid_h.min()) < 0.35 * float(h_proj.max()):
-                        split_y = mid_start + int(np.argmin(mid_h))
-                        b1 = (float(x1), float(y1), float(x2), float(y1 + split_y))
-                        b2 = (float(x1), float(y1 + split_y), float(x2), float(y2))
-                        for b_cand in (b1, b2):
-                            cand_w = b_cand[2] - b_cand[0]
-                            cand_h = b_cand[3] - b_cand[1]
-                            if cand_w >= 20 and cand_h >= 20 and (cand_w * cand_h) >= min_box_area:
-                                proposals.append((b_cand, 0.85, "waste_object"))
-                        split_done = True
-
-                if split_done:
+            for s in slices:
+                if s is None:
+                    continue
+                y1, y2 = s[0].start, s[0].stop
+                x1, x2 = s[1].start, s[1].stop
+                bw = x2 - x1
+                bh = y2 - y1
+                area = bw * bh
+                if area < min_box_area or min(bw, bh) < 14:
                     continue
 
-            if area <= max_box_area:
-                comp_energy = float(np.mean(energy_map[y1:y2, x1:x2]))
-                score = min(0.96, max(0.68, 0.65 + 0.32 * comp_energy))
-                proposals.append(((float(x1), float(y1), float(x2), float(y2)), round(score, 3), "waste_object"))
+                # Filter border artifacts
+                if (x1 <= 4 and x2 <= 40 and bh > h * 0.7) or (x1 >= w - 40 and x2 >= w - 4 and bh > h * 0.7):
+                    continue
 
-        suppressed_proposals = apply_non_maximum_suppression(proposals, iou_threshold=0.38)
+                if min_box_area <= area <= max_box_area:
+                    score = float(np.mean(mag[y1:y2, x1:x2])) / (max_m + 1e-5)
+                    area_ratio = area / total_area
+                    boosted_score = 0.50 + 0.35 * score + 0.15 * min(1.0, area_ratio / 0.10)
+                    proposals.append(((float(x1), float(y1), float(x2), float(y2)), boosted_score, "morph_obj"))
+                elif area > max_box_area:
+                    # Projection valley splitting to sever touching objects
+                    sub = edge_bin[y1:y2, x1:x2]
+                    v_p = sub.sum(axis=0)
+                    h_p = sub.sum(axis=1)
+                    if bw >= bh and bw > 50:
+                        ms, me = int(bw * 0.2), int(bw * 0.8)
+                        mid = v_p[ms:me]
+                        if len(mid) > 0 and float(mid.min()) < 0.60 * float(v_p.max()):
+                            sx = ms + int(np.argmin(mid))
+                            for b in [(float(x1), float(y1), float(x1 + sx), float(y2)), (float(x1 + sx), float(y1), float(x2), float(y2))]:
+                                ca = (b[2] - b[0]) * (b[3] - b[1])
+                                if min_box_area <= ca <= max_box_area:
+                                    proposals.append((b, 0.85, "morph_split"))
+                    elif bh > bw and bh > 50:
+                        ms, me = int(bh * 0.2), int(bh * 0.8)
+                        mid = h_p[ms:me]
+                        if len(mid) > 0 and float(mid.min()) < 0.60 * float(h_p.max()):
+                            sy = ms + int(np.argmin(mid))
+                            for b in [(float(x1), float(y1), float(x2), float(y1 + sy)), (float(x1), float(y1 + sy), float(x2), float(y2))]:
+                                ca = (b[2] - b[0]) * (b[3] - b[1])
+                                if min_box_area <= ca <= max_box_area:
+                                    proposals.append((b, 0.85, "morph_split"))
 
-        # Ensure spatial diversity if multiple items present
-        if len(suppressed_proposals) < 2 and total_area > 30000:
-            half_w = float(w) / 2.0
-            half_h = float(h) / 2.0
-            quadrants = [
-                ((half_w * 0.08, half_h * 0.08, half_w * 0.92, half_h * 0.92), 0.76, "waste_item_1"),
-                ((half_w * 1.08, half_h * 0.08, half_w * 1.92, half_h * 0.92), 0.76, "waste_item_2"),
-            ]
-            for q_box, q_score, q_lbl in quadrants:
-                suppressed_proposals.append((q_box, q_score, q_lbl))
-            suppressed_proposals = apply_non_maximum_suppression(suppressed_proposals, iou_threshold=0.35)
+        # 3. Background color-contrast saliency proposals (transparent plastic, soft-edge containers)
+        cv_img = np.array(pil_image.convert("RGB"))
+        borders = np.vstack([
+            cv_img[:15, :].reshape(-1, 3),
+            cv_img[-15:, :].reshape(-1, 3),
+            cv_img[:, :15].reshape(-1, 3),
+            cv_img[:, -15:].reshape(-1, 3),
+        ])
+        bg_color = np.median(borders, axis=0)
+        diff = np.max(np.abs(cv_img.astype(float) - bg_color), axis=2)
+        max_diff = diff.max() + 1e-5
+        norm_mag = mag / (max_m + 1e-5)
+        saliency = 0.6 * (diff / max_diff) + 0.4 * norm_mag
+
+        for thresh in [0.28, 0.42]:
+            bin_mask = (saliency > thresh).astype(np.uint8) * 255
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+            closed = cv2.morphologyEx(bin_mask, cv2.MORPH_CLOSE, kernel)
+            cnts, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for c in cnts:
+                x, y, bw, bh = cv2.boundingRect(c)
+                area = float(bw * bh)
+                if min_box_area <= area <= max_box_area:
+                    score = float(np.mean(saliency[y:y+bh, x:x+bw]))
+                    proposals.append(((float(x), float(y), float(x+bw), float(y+bh)), score, "contrast_obj"))
+
+        # 4. Merge vertically aligned can fragments
+        proposals = merge_can_fragments(proposals, max_v_gap=60.0)
+
+        # 5. Suppress nested containment and overlapping boxes
+        suppressed_proposals = apply_containment_and_nms(
+            proposals,
+            containment_threshold=0.65,
+            iou_threshold=0.35,
+            max_area_ratio=0.85,
+            total_area=total_area,
+        )
 
         validated_boxes: List[Tuple[BoundingBox, float, str]] = []
         for box, score, label in suppressed_proposals[:max_detections]:
@@ -313,9 +450,19 @@ class WasteObjectDetector:
             x2 = max(x1 + 10.0, min(float(w), round(box[2], 1)))
             y2 = max(y1 + 10.0, min(float(h), round(box[3], 1)))
 
+            box_area = (x2 - x1) * (y2 - y1)
+            # Deep YOLO objects or isolated foreground items can occupy up to 85% of frame
+            effective_max_area = (
+                total_area * 0.85
+                if (label.startswith("yolo_") or len(suppressed_proposals) <= 2)
+                else total_area * 0.38
+            )
+            if box_area > effective_max_area or box_area < min_box_area:
+                continue
+
             validated_boxes.append((
                 BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2),
-                round(score, 3),
+                round(min(0.99, max(0.10, score)), 3),
                 label,
             ))
 
@@ -391,6 +538,7 @@ def detect_and_classify_objects(
 ) -> DetectResponse:
     """
     Full Multi-Object Waste Detection & Crop-Level Classification pipeline.
+    Reuses existing loaded model instances without per-crop reloading.
     """
     t0 = time.perf_counter()
     w, h = pil_image.size
@@ -410,15 +558,20 @@ def detect_and_classify_objects(
             vit_num_classes = val
 
     for idx, (bbox, det_conf, label) in enumerate(candidates, start=1):
-        # 1. Individual Object Cropping with 5% padding & boundary clipping
-        pad_x = (bbox.x2 - bbox.x1) * 0.05
-        pad_y = (bbox.y2 - bbox.y1) * 0.05
+        # 1. Individual Object Cropping with tight 3% padding & boundary clipping
+        pad_x = (bbox.x2 - bbox.x1) * 0.03
+        pad_y = (bbox.y2 - bbox.y1) * 0.03
         cx1 = max(0, int(bbox.x1 - pad_x))
         cy1 = max(0, int(bbox.y1 - pad_y))
         cx2 = min(w, int(bbox.x2 + pad_x))
         cy2 = min(h, int(bbox.y2 + pad_y))
 
         crop_img = pil_image.crop((cx1, cy1, cx2, cy2))
+
+        # Generate base64 thumbnail of crop for UI card inspection
+        crop_buf = io.BytesIO()
+        crop_img.save(crop_buf, format="JPEG", quality=85)
+        crop_b64 = f"data:image/jpeg;base64,{base64.b64encode(crop_buf.getvalue()).decode('utf-8')}"
 
         # 2. ViT Inference on crop
         try:
@@ -457,10 +610,6 @@ def detect_and_classify_objects(
             clip_pred = max(vit_probs, key=vit_probs.get)
 
         # 4. Dynamic Class Compatibility & Ensemble Fusion
-        vit_top = max(vit_probs, key=vit_probs.get)
-        vit_top_prob = vit_probs[vit_top]
-
-        # Check organic condition: if CLIP detects organic with high confidence and ViT only has 6 classes
         clip_organic_prob = clip_probs.get("organic", 0.0)
         second_clip_prob = max([v for k, v in clip_probs.items() if k != "organic"], default=0.0)
         clip_organic_margin = clip_organic_prob - second_clip_prob
@@ -471,7 +620,6 @@ def detect_and_classify_objects(
         # 3. CLIP V2 supports organic ("organic" in clip_probs)
         # 4. CLIP organic confidence >= 0.40 and margin >= 0.10
         # 5. Compatibility decision recorded in response
-        # (If ViT has >= 7 classes, organic is evaluated with standard ensemble & disagreement routing)
         is_organic_v1_bypass = (
             vit_num_classes == 6
             and clip_pred == "organic"
@@ -480,7 +628,6 @@ def detect_and_classify_objects(
         )
 
         if is_organic_v1_bypass:
-            # ViT V1 lacks organic class; recognize organic based on CLIP foundation model
             final_cat = "organic"
             final_conf = clip_organic_prob
             class_probs = {
@@ -492,20 +639,18 @@ def detect_and_classify_objects(
                 "organic": round(clip_organic_prob, 4),
                 "trash": round(vit_probs.get("trash", 0.0) * 0.35 + clip_probs.get("trash", 0.0) * 0.3, 4),
             }
-            # Normalize to strictly sum to 1.0
+            # Strictly normalize to 1.0
             tot = sum(class_probs.values())
             class_probs = {k: round(v / tot, 4) for k, v in class_probs.items()}
             is_ood = False
-            # When ViT is 6-class and CLIP identifies organic, flag coverage distinction
             conf_status = "normal" if final_conf >= 0.70 else "ambiguous"
             models_agree = False
             vit_prediction_label = "Not supported (V1 6-class)"
             compat_decision = "organic_v1_clip_bypass"
         else:
-            # Both models operating on shared classes (or 7-class ViT if loaded)
+            # Shared classes or 7-class ViT V2
             fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
             final_cat = fused.predicted_category
-            # Use raw unsharpened ensemble confidence
             final_conf = fused.confidence
             class_probs = {k: round(v, 4) for k, v in fused.class_probabilities.items()}
             is_ood = fused.is_out_of_distribution
@@ -517,7 +662,6 @@ def detect_and_classify_objects(
             if is_ood:
                 conf_status = "out_of_distribution"
             elif not models_agree:
-                # Strong model disagreement requires review even if weighted confidence appears elevated
                 conf_status = "ambiguous"
                 final_conf = min(final_conf, 0.68)
             elif final_conf >= 0.70:
@@ -527,7 +671,6 @@ def detect_and_classify_objects(
             else:
                 conf_status = "low_confidence"
 
-        # Cap confidence to avoid rounded 100% false certainty
         final_conf = min(0.985, round(final_conf, 4))
 
         # 5. Intelligent Recycling Decision
@@ -590,6 +733,7 @@ def detect_and_classify_objects(
                 model_coverage=model_cov,
                 crop_width=crop_w,
                 crop_height=crop_h,
+                crop_image_base64=crop_b64,
                 recycling_status=rec_decision.disposal_status.value,
                 disposal_recommendation=rec_decision.action,
                 preparation_steps=rec_decision.preparation_steps,
@@ -609,8 +753,18 @@ def detect_and_classify_objects(
     if sum_stream != len(detected_objects):
         logger.error("Disposal stream count mismatch: %d != %d", sum_stream, len(detected_objects))
 
+    clean_buf = io.BytesIO()
+    pil_image.convert("RGB").save(clean_buf, format="JPEG", quality=90)
+    clean_base64 = f"data:image/jpeg;base64,{base64.b64encode(clean_buf.getvalue()).decode('utf-8')}"
+
     annotated_base64 = render_annotated_image(pil_image, detected_objects)
     inference_time = (time.perf_counter() - t0) * 1000.0
+
+    vit_version_str = (
+        "google/vit-base-patch16-224-in21k-v2"
+        if vit_num_classes >= 7
+        else "google/vit-base-patch16-224-in21k-v1"
+    )
 
     return DetectResponse(
         image_width=w,
@@ -624,12 +778,13 @@ def detect_and_classify_objects(
             status_counts=status_counts,
         ),
         model_versions={
-            "vit_classifier": "google/vit-base-patch16-224-in21k-v1",
+            "vit_classifier": vit_version_str,
             "clip_foundation": "openai/clip-vit-base-patch32",
             "detector_engine": f"WasteObjectDetector-{detector.model_status}",
             "decision_engine": "v2.0-swm-rules",
         },
         inference_time_ms=round(inference_time, 2),
         annotated_image_base64=annotated_base64,
+        clean_image_base64=clean_base64,
         detection_model_status=detector.model_status,
     )

@@ -1,0 +1,1231 @@
+{
+  "image_path": "backend/evaluation/test_image_waste_flatlay.jpg",
+  "image_size": [
+    1168,
+    784
+  ],
+  "stages": {
+    "01_original": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\01_original_image.jpg",
+    "04_yolo_proposals_count": 10,
+    "02_03_morph_proposals_count": 25,
+    "contrast_proposals_count": 15,
+    "05_total_raw_proposals": 50,
+    "06_proposals_post_merge": 44,
+    "07_removed_by_iou": 0,
+    "08_removed_by_iomin": 27,
+    "09_final_accepted_count": 15
+  },
+  "accepted_objects": [
+    {
+      "object_id": 1,
+      "proposal_id": "Y1",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_bottle",
+      "box": [
+        897.0,
+        321.1,
+        1012.3,
+        768.9
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_01_Y1.jpg",
+      "vit_prediction": "glass",
+      "vit_confidence": 0.9152,
+      "vit_probabilities": {
+        "cardboard": 0.0107,
+        "glass": 0.9152,
+        "metal": 0.0123,
+        "paper": 0.0106,
+        "plastic": 0.0436,
+        "trash": 0.0076
+      },
+      "clip_prediction": "glass",
+      "clip_confidence": 0.9834,
+      "clip_probabilities": {
+        "cardboard": 0.0,
+        "glass": 0.9834,
+        "metal": 0.0004,
+        "paper": 0.0,
+        "plastic": 0.0162,
+        "organic": 0.0,
+        "trash": 0.0
+      },
+      "final_category": "glass",
+      "final_confidence": 0.9356,
+      "ensemble_probabilities": {
+        "cardboard": 0.0075,
+        "glass": 0.9356,
+        "metal": 0.0087,
+        "paper": 0.0074,
+        "plastic": 0.0354,
+        "trash": 0.0053
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 2,
+      "proposal_id": "Y2",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_bottle",
+      "box": [
+        1015.0,
+        333.8,
+        1125.7,
+        768.1
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_02_Y2.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.8956,
+      "vit_probabilities": {
+        "cardboard": 0.013,
+        "glass": 0.0573,
+        "metal": 0.013,
+        "paper": 0.012,
+        "plastic": 0.8956,
+        "trash": 0.0091
+      },
+      "clip_prediction": "glass",
+      "clip_confidence": 0.9881,
+      "clip_probabilities": {
+        "cardboard": 0.0,
+        "glass": 0.9881,
+        "metal": 0.0003,
+        "paper": 0.0,
+        "plastic": 0.0115,
+        "organic": 0.0,
+        "trash": 0.0
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.6304,
+      "ensemble_probabilities": {
+        "cardboard": 0.0091,
+        "glass": 0.3366,
+        "metal": 0.0092,
+        "paper": 0.0084,
+        "plastic": 0.6304,
+        "trash": 0.0064
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 3,
+      "proposal_id": "Y3",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_bottle",
+      "box": [
+        886.8,
+        170.1,
+        981.9,
+        314.7
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_03_Y3.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.9335,
+      "vit_probabilities": {
+        "cardboard": 0.01,
+        "glass": 0.0237,
+        "metal": 0.0128,
+        "paper": 0.0105,
+        "plastic": 0.9335,
+        "trash": 0.0095
+      },
+      "clip_prediction": "glass",
+      "clip_confidence": 0.7406,
+      "clip_probabilities": {
+        "cardboard": 0.0,
+        "glass": 0.7406,
+        "metal": 0.0,
+        "paper": 0.0,
+        "plastic": 0.2592,
+        "organic": 0.0,
+        "trash": 0.0001
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.7312,
+      "ensemble_probabilities": {
+        "cardboard": 0.007,
+        "glass": 0.2388,
+        "metal": 0.009,
+        "paper": 0.0073,
+        "plastic": 0.7312,
+        "trash": 0.0067
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 4,
+      "proposal_id": "Y4",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_cup_merged",
+      "box": [
+        439.7,
+        398.0,
+        556.1,
+        764.6
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_04_Y4.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9021,
+      "vit_probabilities": {
+        "cardboard": 0.0313,
+        "glass": 0.0145,
+        "metal": 0.9021,
+        "paper": 0.0178,
+        "plastic": 0.016,
+        "trash": 0.0183
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.873,
+      "clip_probabilities": {
+        "cardboard": 0.0008,
+        "glass": 0.0273,
+        "metal": 0.873,
+        "paper": 0.0033,
+        "plastic": 0.0871,
+        "organic": 0.0,
+        "trash": 0.0084
+      },
+      "final_category": "metal",
+      "final_confidence": 0.8934,
+      "ensemble_probabilities": {
+        "cardboard": 0.0221,
+        "glass": 0.0183,
+        "metal": 0.8934,
+        "paper": 0.0135,
+        "plastic": 0.0373,
+        "trash": 0.0153
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 5,
+      "proposal_id": "Y6",
+      "proposal_source": "yolo",
+      "proposal_label": "yolo_cup",
+      "box": [
+        322.9,
+        569.9,
+        441.9,
+        764.7
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_05_Y6.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9082,
+      "vit_probabilities": {
+        "cardboard": 0.0197,
+        "glass": 0.021,
+        "metal": 0.9082,
+        "paper": 0.0153,
+        "plastic": 0.0223,
+        "trash": 0.0135
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.6242,
+      "clip_probabilities": {
+        "cardboard": 0.0041,
+        "glass": 0.1021,
+        "metal": 0.6242,
+        "paper": 0.0168,
+        "plastic": 0.2476,
+        "organic": 0.0001,
+        "trash": 0.0051
+      },
+      "final_category": "metal",
+      "final_confidence": 0.823,
+      "ensemble_probabilities": {
+        "cardboard": 0.015,
+        "glass": 0.0453,
+        "metal": 0.823,
+        "paper": 0.0157,
+        "plastic": 0.0899,
+        "trash": 0.011
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 6,
+      "proposal_id": "M18",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15_merged",
+      "box": [
+        484.0,
+        333.0,
+        677.0,
+        618.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_06_M18.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9297,
+      "vit_probabilities": {
+        "cardboard": 0.0138,
+        "glass": 0.0122,
+        "metal": 0.9297,
+        "paper": 0.013,
+        "plastic": 0.0123,
+        "trash": 0.0191
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.903,
+      "clip_probabilities": {
+        "cardboard": 0.0535,
+        "glass": 0.0001,
+        "metal": 0.903,
+        "paper": 0.0052,
+        "plastic": 0.0017,
+        "organic": 0.0,
+        "trash": 0.0364
+      },
+      "final_category": "metal",
+      "final_confidence": 0.9217,
+      "ensemble_probabilities": {
+        "cardboard": 0.0257,
+        "glass": 0.0085,
+        "metal": 0.9217,
+        "paper": 0.0106,
+        "plastic": 0.0091,
+        "trash": 0.0243
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 7,
+      "proposal_id": "M21",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        663.0,
+        399.0,
+        777.0,
+        725.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_07_M21.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9431,
+      "vit_probabilities": {
+        "cardboard": 0.0116,
+        "glass": 0.0123,
+        "metal": 0.9431,
+        "paper": 0.0125,
+        "plastic": 0.0103,
+        "trash": 0.0104
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.9948,
+      "clip_probabilities": {
+        "cardboard": 0.0003,
+        "glass": 0.0021,
+        "metal": 0.9948,
+        "paper": 0.0006,
+        "plastic": 0.001,
+        "organic": 0.0,
+        "trash": 0.0011
+      },
+      "final_category": "metal",
+      "final_confidence": 0.9586,
+      "ensemble_probabilities": {
+        "cardboard": 0.0082,
+        "glass": 0.0092,
+        "metal": 0.9586,
+        "paper": 0.0089,
+        "plastic": 0.0075,
+        "trash": 0.0076
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 8,
+      "proposal_id": "M25",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15_merged",
+      "box": [
+        796.0,
+        509.0,
+        865.0,
+        726.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_08_M25.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9346,
+      "vit_probabilities": {
+        "cardboard": 0.0144,
+        "glass": 0.0133,
+        "metal": 0.9346,
+        "paper": 0.0142,
+        "plastic": 0.0107,
+        "trash": 0.0129
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.9729,
+      "clip_probabilities": {
+        "cardboard": 0.0019,
+        "glass": 0.0164,
+        "metal": 0.9729,
+        "paper": 0.0043,
+        "plastic": 0.0024,
+        "organic": 0.0004,
+        "trash": 0.0016
+      },
+      "final_category": "metal",
+      "final_confidence": 0.9462,
+      "ensemble_probabilities": {
+        "cardboard": 0.0107,
+        "glass": 0.0142,
+        "metal": 0.9462,
+        "paper": 0.0112,
+        "plastic": 0.0082,
+        "trash": 0.0095
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 9,
+      "proposal_id": "M22",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        34.0,
+        451.0,
+        254.0,
+        761.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_09_M22.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.8985,
+      "vit_probabilities": {
+        "cardboard": 0.0403,
+        "glass": 0.0139,
+        "metal": 0.8985,
+        "paper": 0.0173,
+        "plastic": 0.0138,
+        "trash": 0.0162
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.9325,
+      "clip_probabilities": {
+        "cardboard": 0.0143,
+        "glass": 0.0012,
+        "metal": 0.9325,
+        "paper": 0.0009,
+        "plastic": 0.0117,
+        "organic": 0.0012,
+        "trash": 0.0382
+      },
+      "final_category": "metal",
+      "final_confidence": 0.909,
+      "ensemble_probabilities": {
+        "cardboard": 0.0325,
+        "glass": 0.0101,
+        "metal": 0.909,
+        "paper": 0.0124,
+        "plastic": 0.0131,
+        "trash": 0.0228
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 10,
+      "proposal_id": "M15",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        84.0,
+        132.0,
+        531.0,
+        434.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_10_M15.jpg",
+      "vit_prediction": "cardboard",
+      "vit_confidence": 0.9539,
+      "vit_probabilities": {
+        "cardboard": 0.9539,
+        "glass": 0.0084,
+        "metal": 0.008,
+        "paper": 0.0099,
+        "plastic": 0.0075,
+        "trash": 0.0123
+      },
+      "clip_prediction": "trash",
+      "clip_confidence": 0.6096,
+      "clip_probabilities": {
+        "cardboard": 0.3557,
+        "glass": 0.0003,
+        "metal": 0.0008,
+        "paper": 0.013,
+        "plastic": 0.0201,
+        "organic": 0.0006,
+        "trash": 0.6096
+      },
+      "final_category": "cardboard",
+      "final_confidence": 0.7745,
+      "ensemble_probabilities": {
+        "cardboard": 0.7745,
+        "glass": 0.006,
+        "metal": 0.0059,
+        "paper": 0.0108,
+        "plastic": 0.0112,
+        "trash": 0.1916
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 11,
+      "proposal_id": "M12",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        944.0,
+        27.0,
+        1126.0,
+        185.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_11_M12.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9282,
+      "vit_probabilities": {
+        "cardboard": 0.014,
+        "glass": 0.0171,
+        "metal": 0.9282,
+        "paper": 0.0137,
+        "plastic": 0.0154,
+        "trash": 0.0117
+      },
+      "clip_prediction": "metal",
+      "clip_confidence": 0.9894,
+      "clip_probabilities": {
+        "cardboard": 0.0093,
+        "glass": 0.0002,
+        "metal": 0.9894,
+        "paper": 0.0002,
+        "plastic": 0.0007,
+        "organic": 0.0,
+        "trash": 0.0003
+      },
+      "final_category": "metal",
+      "final_confidence": 0.9466,
+      "ensemble_probabilities": {
+        "cardboard": 0.0126,
+        "glass": 0.012,
+        "metal": 0.9466,
+        "paper": 0.0096,
+        "plastic": 0.011,
+        "trash": 0.0083
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 12,
+      "proposal_id": "C49",
+      "proposal_source": "contrast_saliency",
+      "proposal_label": "contrast_t42",
+      "box": [
+        625.0,
+        38.0,
+        799.0,
+        179.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_12_C49.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.926,
+      "vit_probabilities": {
+        "cardboard": 0.0136,
+        "glass": 0.014,
+        "metal": 0.019,
+        "paper": 0.0148,
+        "plastic": 0.926,
+        "trash": 0.0127
+      },
+      "clip_prediction": "plastic",
+      "clip_confidence": 0.9366,
+      "clip_probabilities": {
+        "cardboard": 0.0002,
+        "glass": 0.0427,
+        "metal": 0.0061,
+        "paper": 0.0003,
+        "plastic": 0.9366,
+        "organic": 0.0002,
+        "trash": 0.0139
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.9292,
+      "ensemble_probabilities": {
+        "cardboard": 0.0096,
+        "glass": 0.0226,
+        "metal": 0.0151,
+        "paper": 0.0104,
+        "plastic": 0.9292,
+        "trash": 0.0131
+      },
+      "models_agree": true,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 13,
+      "proposal_id": "M14",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        1116.0,
+        42.0,
+        1152.0,
+        180.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_13_M14.jpg",
+      "vit_prediction": "metal",
+      "vit_confidence": 0.9366,
+      "vit_probabilities": {
+        "cardboard": 0.0121,
+        "glass": 0.0148,
+        "metal": 0.9366,
+        "paper": 0.0125,
+        "plastic": 0.0125,
+        "trash": 0.0114
+      },
+      "clip_prediction": "paper",
+      "clip_confidence": 0.3741,
+      "clip_probabilities": {
+        "cardboard": 0.3735,
+        "glass": 0.0766,
+        "metal": 0.1173,
+        "paper": 0.3741,
+        "plastic": 0.0217,
+        "organic": 0.0058,
+        "trash": 0.0309
+      },
+      "final_category": "metal",
+      "final_confidence": 0.691,
+      "ensemble_probabilities": {
+        "cardboard": 0.1212,
+        "glass": 0.0335,
+        "metal": 0.691,
+        "paper": 0.1216,
+        "plastic": 0.0153,
+        "trash": 0.0173
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 14,
+      "proposal_id": "M11",
+      "proposal_source": "morphology",
+      "proposal_label": "morph_p15",
+      "box": [
+        480.0,
+        15.0,
+        583.0,
+        42.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_14_M11.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.7824,
+      "vit_probabilities": {
+        "cardboard": 0.0304,
+        "glass": 0.0753,
+        "metal": 0.0493,
+        "paper": 0.0263,
+        "plastic": 0.7824,
+        "trash": 0.0363
+      },
+      "clip_prediction": "glass",
+      "clip_confidence": 0.5884,
+      "clip_probabilities": {
+        "cardboard": 0.004,
+        "glass": 0.5884,
+        "metal": 0.0255,
+        "paper": 0.045,
+        "plastic": 0.1996,
+        "organic": 0.0053,
+        "trash": 0.1322
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.6079,
+      "ensemble_probabilities": {
+        "cardboard": 0.0225,
+        "glass": 0.2302,
+        "metal": 0.0422,
+        "paper": 0.032,
+        "plastic": 0.6079,
+        "trash": 0.0653
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    },
+    {
+      "object_id": 15,
+      "proposal_id": "C41",
+      "proposal_source": "contrast_saliency",
+      "proposal_label": "contrast_t28",
+      "box": [
+        27.0,
+        36.0,
+        60.0,
+        141.0
+      ],
+      "crop_path": "backend\\evaluation\\v3_diagnostic_stages\\scene6_original_flatlay\\10_crops\\crop_15_C41.jpg",
+      "vit_prediction": "plastic",
+      "vit_confidence": 0.4832,
+      "vit_probabilities": {
+        "cardboard": 0.0253,
+        "glass": 0.1163,
+        "metal": 0.3168,
+        "paper": 0.0291,
+        "plastic": 0.4832,
+        "trash": 0.0292
+      },
+      "clip_prediction": "glass",
+      "clip_confidence": 0.5721,
+      "clip_probabilities": {
+        "cardboard": 0.0001,
+        "glass": 0.5721,
+        "metal": 0.0252,
+        "paper": 0.031,
+        "plastic": 0.3539,
+        "organic": 0.0001,
+        "trash": 0.0174
+      },
+      "final_category": "plastic",
+      "final_confidence": 0.4444,
+      "ensemble_probabilities": {
+        "cardboard": 0.0178,
+        "glass": 0.2531,
+        "metal": 0.2293,
+        "paper": 0.0297,
+        "plastic": 0.4444,
+        "trash": 0.0257
+      },
+      "models_agree": false,
+      "is_organic_bypass": false
+    }
+  ],
+  "removed_iomin": [
+    {
+      "id": "Y5",
+      "coords": [
+        1085.9349365234375,
+        360.1898498535156,
+        1167.8582763671875,
+        775.5499877929688
+      ],
+      "score": 0.484,
+      "label": "yolo_bottle",
+      "source": "yolo",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y2"
+    },
+    {
+      "id": "M23",
+      "coords": [
+        783.0,
+        495.0,
+        865.0,
+        727.0
+      ],
+      "score": 0.613,
+      "label": "morph_p15_merged",
+      "source": "morphology",
+      "merged_with": [
+        "M26"
+      ],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M25"
+    },
+    {
+      "id": "M13",
+      "coords": [
+        621.0,
+        37.0,
+        799.0,
+        177.0
+      ],
+      "score": 0.52,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "C49"
+    },
+    {
+      "id": "M32",
+      "coords": [
+        664.0,
+        512.0,
+        768.0,
+        626.0
+      ],
+      "score": 0.55,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M21"
+    },
+    {
+      "id": "C39",
+      "coords": [
+        622.0,
+        37.0,
+        802.0,
+        196.0
+      ],
+      "score": 0.471,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "C49"
+    },
+    {
+      "id": "M31",
+      "coords": [
+        818.0,
+        511.0,
+        862.0,
+        589.0
+      ],
+      "score": 0.569,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M25"
+    },
+    {
+      "id": "M30",
+      "coords": [
+        783.0,
+        495.0,
+        838.0,
+        581.0
+      ],
+      "score": 0.559,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M25"
+    },
+    {
+      "id": "C50",
+      "coords": [
+        947.0,
+        28.0,
+        1164.0,
+        190.0
+      ],
+      "score": 0.424,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M12"
+    },
+    {
+      "id": "M16",
+      "coords": [
+        93.0,
+        296.0,
+        183.0,
+        346.0
+      ],
+      "score": 0.535,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M27",
+      "coords": [
+        93.0,
+        296.0,
+        183.0,
+        346.0
+      ],
+      "score": 0.535,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M17",
+      "coords": [
+        70.0,
+        332.0,
+        124.0,
+        407.0
+      ],
+      "score": 0.537,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M28",
+      "coords": [
+        70.0,
+        332.0,
+        124.0,
+        407.0
+      ],
+      "score": 0.537,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M34",
+      "coords": [
+        94.0,
+        296.0,
+        182.0,
+        346.0
+      ],
+      "score": 0.535,
+      "label": "morph_p42",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M35",
+      "coords": [
+        70.0,
+        332.0,
+        124.0,
+        406.0
+      ],
+      "score": 0.537,
+      "label": "morph_p42",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M19",
+      "coords": [
+        129.0,
+        345.0,
+        197.0,
+        418.0
+      ],
+      "score": 0.531,
+      "label": "morph_p15",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "M29",
+      "coords": [
+        130.0,
+        345.0,
+        197.0,
+        417.0
+      ],
+      "score": 0.531,
+      "label": "morph_p28",
+      "source": "morphology",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "C42",
+      "coords": [
+        945.0,
+        28.0,
+        1168.0,
+        205.0
+      ],
+      "score": 0.398,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M12"
+    },
+    {
+      "id": "C36",
+      "coords": [
+        61.0,
+        37.0,
+        220.0,
+        418.0
+      ],
+      "score": 0.388,
+      "label": "contrast_t28_merged",
+      "source": "contrast_saliency",
+      "merged_with": [
+        "C40",
+        "C45"
+      ],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "C48",
+      "coords": [
+        10.0,
+        133.0,
+        1129.0,
+        771.0
+      ],
+      "score": 0.352,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C37",
+      "coords": [
+        10.0,
+        133.0,
+        1150.0,
+        778.0
+      ],
+      "score": 0.348,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "Y7",
+      "coords": [
+        624.7388916015625,
+        39.26969909667969,
+        799.2797241210938,
+        178.8680419921875
+      ],
+      "score": 0.212,
+      "label": "yolo_bottle",
+      "source": "yolo",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "C49"
+    },
+    {
+      "id": "Y8",
+      "coords": [
+        884.44140625,
+        169.3265380859375,
+        1038.034423828125,
+        528.67041015625
+      ],
+      "score": 0.191,
+      "label": "yolo_bottle",
+      "source": "yolo",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y1"
+    },
+    {
+      "id": "C46",
+      "coords": [
+        890.0,
+        177.0,
+        960.0,
+        248.0
+      ],
+      "score": 0.339,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "Y3"
+    },
+    {
+      "id": "C44",
+      "coords": [
+        810.0,
+        511.0,
+        862.0,
+        583.0
+      ],
+      "score": 0.282,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M25"
+    },
+    {
+      "id": "C43",
+      "coords": [
+        385.0,
+        11.0,
+        617.0,
+        190.0
+      ],
+      "score": 0.194,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M11"
+    },
+    {
+      "id": "C47",
+      "coords": [
+        465.0,
+        148.0,
+        561.0,
+        186.0
+      ],
+      "score": 0.229,
+      "label": "contrast_t42",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    },
+    {
+      "id": "C38",
+      "coords": [
+        150.0,
+        115.0,
+        247.0,
+        188.0
+      ],
+      "score": 0.201,
+      "label": "contrast_t28",
+      "source": "contrast_saliency",
+      "merged_with": [],
+      "color": [
+        239,
+        68,
+        68
+      ],
+      "removed_by": "M15"
+    }
+  ],
+  "removed_iou": []
+}

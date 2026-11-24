@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function ObjectCard({ object, isSelected, onSelect }: Props) {
-  const catColor = CATEGORY_COLORS[object.material_category.toLowerCase()] ?? '#16A34A'
+  const cat = object.material_category.toLowerCase()
+  const catColor = CATEGORY_COLORS[cat] ?? '#16A34A'
   const isAgree = object.model_agreement ?? (object.vit_prediction.toLowerCase() === object.clip_prediction.toLowerCase())
 
   return (
@@ -24,12 +25,31 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
       {/* Top Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div
-            className="h-7 w-7 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-xs"
-            style={{ backgroundColor: catColor }}
-          >
-            #{object.object_id}
-          </div>
+          {object.crop_image_base64 ? (
+            <div
+              className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border-2 shadow-xs bg-slate-100"
+              style={{ borderColor: catColor }}
+            >
+              <img
+                src={object.crop_image_base64}
+                alt={`Crop #${object.object_id}`}
+                className="w-full h-full object-cover"
+              />
+              <span
+                className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl-md text-[9px] font-bold text-white shadow-xs"
+                style={{ backgroundColor: catColor }}
+              >
+                #{object.object_id}
+              </span>
+            </div>
+          ) : (
+            <div
+              className="h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-xs"
+              style={{ backgroundColor: catColor }}
+            >
+              #{object.object_id}
+            </div>
+          )}
           <div>
             <h4 className="text-sm font-heading font-extrabold text-slate-900 leading-tight">
               {object.detection_label || `${capitalize(object.material_category)} item`}

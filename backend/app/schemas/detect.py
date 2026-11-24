@@ -4,7 +4,7 @@ Pydantic schemas for Multi-Object Waste Detection (EcoSort AI V2).
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from app.schemas.predict import RecyclingDecisionSchema
 
@@ -14,6 +14,26 @@ class BoundingBox(BaseModel):
     y1: float = Field(..., description="Top coordinate")
     x2: float = Field(..., description="Right coordinate")
     y2: float = Field(..., description="Bottom coordinate")
+
+    @computed_field
+    @property
+    def x(self) -> float:
+        return self.x1
+
+    @computed_field
+    @property
+    def y(self) -> float:
+        return self.y1
+
+    @computed_field
+    @property
+    def width(self) -> float:
+        return round(max(0.0, self.x2 - self.x1), 2)
+
+    @computed_field
+    @property
+    def height(self) -> float:
+        return round(max(0.0, self.y2 - self.y1), 2)
 
 
 class ModelCoverage(BaseModel):
@@ -42,10 +62,31 @@ class DetectedObject(BaseModel):
     model_coverage: Optional[ModelCoverage] = None
     crop_width: Optional[int] = None
     crop_height: Optional[int] = None
+    crop_image_base64: Optional[str] = None
     recycling_status: str
     disposal_recommendation: str
     preparation_steps: List[str]
     recycling_decision: RecyclingDecisionSchema
+
+    @computed_field
+    @property
+    def category(self) -> str:
+        return self.material_category
+
+    @computed_field
+    @property
+    def classification_confidence(self) -> float:
+        return self.calibrated_confidence
+
+    @computed_field
+    @property
+    def probabilities(self) -> Dict[str, float]:
+        return self.class_probabilities
+
+    @computed_field
+    @property
+    def recommendation(self) -> Dict[str, Any]:
+        return self.recycling_decision.model_dump()
 
 
 class RecyclingStatusCounts(BaseModel):
@@ -73,4 +114,15 @@ class DetectResponse(BaseModel):
     model_versions: Dict[str, str]
     inference_time_ms: float
     annotated_image_base64: str
+    clean_image_base64: Optional[str] = None
     detection_model_status: str
+
+    @computed_field
+    @property
+    def success(self) -> bool:
+        return True
+
+    @computed_field
+    @property
+    def image(self) -> Dict[str, int]:
+        return {"width": self.image_width, "height": self.image_height}

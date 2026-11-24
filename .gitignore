@@ -18,6 +18,8 @@ env/
 # ── Large ML / Data assets (keep out of Git) ────────────
 backend/models/vit/best/
 backend/models/vit/latest/
+backend/models/vit_v2/best/
+backend/models/vit_v2/latest/
 backend/models/detection_v2/weights/
 *.safetensors
 *.bin

@@ -1,0 +1,182 @@
+{
+  "01_single_glass_tumbler.jpg": {
+    "category_group": "Single glass tumbler",
+    "description": "Single glass tumbler on clean background",
+    "width": 380,
+    "height": 395,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "box": [10.0, 10.0, 370.0, 390.0]
+      }
+    ]
+  },
+  "02_single_plastic_bottle.jpg": {
+    "category_group": "Single plastic bottle",
+    "description": "Single plastic water bottle with label and cap",
+    "width": 185,
+    "height": 250,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "box": [30.0, 5.0, 175.0, 245.0]
+      }
+    ]
+  },
+  "03_multiple_plastic_bottles.jpg": {
+    "category_group": "Multiple plastic bottles",
+    "description": "Multiple bottles and containers clustered on table",
+    "width": 520,
+    "height": 320,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "box": [20.0, 20.0, 240.0, 290.0]
+      },
+      {
+        "object_id": 2,
+        "category": "glass",
+        "box": [260.0, 30.0, 490.0, 300.0]
+      }
+    ]
+  },
+  "04_multiple_metal_cans.jpg": {
+    "category_group": "Multiple metal cans",
+    "description": "Two beverage cans standing on surface with metallic specular highlights",
+    "width": 540,
+    "height": 340,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "metal",
+        "box": [20.0, 30.0, 250.0, 320.0]
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "box": [270.0, 25.0, 510.0, 320.0]
+      }
+    ]
+  },
+  "05_cardboard_packaging.jpg": {
+    "category_group": "Cardboard packaging",
+    "description": "Nested and open cardboard shipping boxes",
+    "width": 725,
+    "height": 320,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "cardboard",
+        "box": [60.0, 50.0, 460.0, 270.0]
+      },
+      {
+        "object_id": 2,
+        "category": "cardboard",
+        "box": [460.0, 10.0, 660.0, 270.0]
+      }
+    ]
+  },
+  "06_crumpled_paper.jpg": {
+    "category_group": "Crumpled paper",
+    "description": "Crinkled wrapper and packaging material",
+    "width": 280,
+    "height": 220,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "box": [50.0, 40.0, 230.0, 190.0]
+      }
+    ]
+  },
+  "07_banana_peels_and_organic.jpg": {
+    "category_group": "Banana peels and vegetable waste",
+    "description": "Organic food scraps and fruit peel",
+    "width": 360,
+    "height": 260,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "organic",
+        "box": [30.0, 20.0, 330.0, 240.0]
+      }
+    ]
+  },
+  "08_transparent_plastic_tray.jpg": {
+    "category_group": "Transparent plastic trays",
+    "description": "Translucent container with subtle edges",
+    "width": 440,
+    "height": 290,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "box": [25.0, 40.0, 410.0, 250.0]
+      }
+    ]
+  },
+  "09_mixed_glass_and_plastic.jpg": {
+    "category_group": "Mixed glass and plastic",
+    "description": "Plastic bottle and metal can separated horizontally",
+    "width": 640,
+    "height": 360,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "box": [30.0, 40.0, 280.0, 330.0]
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "box": [340.0, 50.0, 590.0, 320.0]
+      }
+    ]
+  },
+  "10_multiple_touching_objects.jpg": {
+    "category_group": "Multiple touching objects",
+    "description": "Glass bottle and metal can physically touching at boundary",
+    "width": 560,
+    "height": 340,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "box": [30.0, 30.0, 280.0, 320.0]
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "box": [275.0, 40.0, 530.0, 320.0]
+      }
+    ]
+  },
+  "11_overlapping_mixed_waste.jpg": {
+    "category_group": "Overlapping mixed waste",
+    "description": "Plastic container partially occluding cardboard packaging",
+    "width": 540,
+    "height": 360,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "box": [20.0, 40.0, 320.0, 320.0]
+      },
+      {
+        "object_id": 2,
+        "category": "cardboard",
+        "box": [220.0, 30.0, 510.0, 330.0]
+      }
+    ]
+  },
+  "12_empty_background.jpg": {
+    "category_group": "Empty/background-only images",
+    "description": "Blank surface with zero waste items",
+    "width": 500,
+    "height": 350,
+    "ground_truth_boxes": []
+  }
+}

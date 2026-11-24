@@ -1,0 +1,281 @@
+{
+  "01_isolated_metal_can.jpg": {
+    "condition": "isolated_object",
+    "description": "Single isolated real reflective metal can",
+    "width": 400,
+    "height": 350,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "metal",
+        "x1": 20.0,
+        "y1": 20.0,
+        "x2": 210.0,
+        "y2": 350.0
+      }
+    ]
+  },
+  "02_isolated_transparent_glass.jpg": {
+    "condition": "transparent_bottle",
+    "description": "Single real transparent glass bottle on light surface",
+    "width": 440,
+    "height": 290,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "x1": 25.0,
+        "y1": 40.0,
+        "x2": 410.0,
+        "y2": 250.0
+      }
+    ]
+  },
+  "03_isolated_organic_waste.jpg": {
+    "condition": "organic_waste",
+    "description": "Real photographic organic food waste item",
+    "width": 360,
+    "height": 260,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "organic",
+        "x1": 30.0,
+        "y1": 20.0,
+        "x2": 330.0,
+        "y2": 240.0
+      }
+    ]
+  },
+  "04_isolated_plastic_wrapper.jpg": {
+    "condition": "plastic_wrapper",
+    "description": "Real crinkled plastic wrapper / soft packaging",
+    "width": 280,
+    "height": 220,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "x1": 50.0,
+        "y1": 40.0,
+        "x2": 225.0,
+        "y2": 180.0
+      }
+    ]
+  },
+  "05_two_separate_objects.jpg": {
+    "condition": "two_separate_objects",
+    "description": "Real plastic bottle and real metal can separated horizontally",
+    "width": 640,
+    "height": 360,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "plastic",
+        "x1": 60.0,
+        "y1": 60.0,
+        "x2": 240.0,
+        "y2": 300.0
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "x1": 380.0,
+        "y1": 70.0,
+        "x2": 560.0,
+        "y2": 290.0
+      }
+    ]
+  },
+  "06_three_separate_objects.jpg": {
+    "condition": "three_separate_objects",
+    "description": "Three distinct real objects: cardboard box, metal can, plastic bottle",
+    "width": 720,
+    "height": 320,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "cardboard",
+        "x1": 40.0,
+        "y1": 60.0,
+        "x2": 220.0,
+        "y2": 260.0
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "x1": 280.0,
+        "y1": 60.0,
+        "x2": 430.0,
+        "y2": 260.0
+      },
+      {
+        "object_id": 3,
+        "category": "plastic",
+        "x1": 500.0,
+        "y1": 55.0,
+        "x2": 660.0,
+        "y2": 265.0
+      }
+    ]
+  },
+  "07_touching_objects.jpg": {
+    "condition": "touching_objects",
+    "description": "Real glass bottle and metal can physically touching at boundary",
+    "width": 560,
+    "height": 340,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "x1": 60.0,
+        "y1": 45.0,
+        "x2": 250.0,
+        "y2": 295.0
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "x1": 250.0,
+        "y1": 55.0,
+        "x2": 430.0,
+        "y2": 285.0
+      }
+    ]
+  },
+  "08_overlapping_objects.jpg": {
+    "condition": "overlapping_objects",
+    "description": "Real plastic item partially occluding a cardboard item",
+    "width": 540,
+    "height": 360,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "cardboard",
+        "x1": 80.0,
+        "y1": 60.0,
+        "x2": 320.0,
+        "y2": 300.0
+      },
+      {
+        "object_id": 2,
+        "category": "plastic",
+        "x1": 260.0,
+        "y1": 110.0,
+        "x2": 440.0,
+        "y2": 270.0
+      }
+    ]
+  },
+  "09_transparent_bottles_cluster.jpg": {
+    "condition": "transparent_bottles",
+    "description": "Cluster of transparent glass jar and clear plastic bottle",
+    "width": 520,
+    "height": 320,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "glass",
+        "x1": 70.0,
+        "y1": 45.0,
+        "x2": 240.0,
+        "y2": 275.0
+      },
+      {
+        "object_id": 2,
+        "category": "plastic",
+        "x1": 280.0,
+        "y1": 50.0,
+        "x2": 440.0,
+        "y2": 270.0
+      }
+    ]
+  },
+  "10_reflective_metal_cans.jpg": {
+    "condition": "reflective_metal_cans",
+    "description": "Two reflective beverage cans with metallic specular highlights",
+    "width": 540,
+    "height": 340,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "metal",
+        "x1": 60.0,
+        "y1": 55.0,
+        "x2": 220.0,
+        "y2": 285.0
+      },
+      {
+        "object_id": 2,
+        "category": "metal",
+        "x1": 290.0,
+        "y1": 60.0,
+        "x2": 460.0,
+        "y2": 280.0
+      }
+    ]
+  },
+  "11_complex_household_garbage.jpg": {
+    "condition": "complex_household_garbage",
+    "description": "Real cluttered floor scene with mixed cardboard, plastic containers, and wrappers",
+    "width": 512,
+    "height": 288,
+    "ground_truth_boxes": [
+      {
+        "object_id": 1,
+        "category": "cardboard",
+        "x1": 190.0,
+        "y1": 85.0,
+        "x2": 255.0,
+        "y2": 145.0
+      },
+      {
+        "object_id": 2,
+        "category": "cardboard",
+        "x1": 180.0,
+        "y1": 135.0,
+        "x2": 265.0,
+        "y2": 170.0
+      },
+      {
+        "object_id": 3,
+        "category": "plastic",
+        "x1": 265.0,
+        "y1": 145.0,
+        "x2": 335.0,
+        "y2": 185.0
+      },
+      {
+        "object_id": 4,
+        "category": "plastic",
+        "x1": 220.0,
+        "y1": 0.0,
+        "x2": 265.0,
+        "y2": 35.0
+      },
+      {
+        "object_id": 5,
+        "category": "cardboard",
+        "x1": 10.0,
+        "y1": 0.0,
+        "x2": 65.0,
+        "y2": 30.0
+      },
+      {
+        "object_id": 6,
+        "category": "trash",
+        "x1": 310.0,
+        "y1": 95.0,
+        "x2": 355.0,
+        "y2": 130.0
+      }
+    ]
+  },
+  "12_blank_background.jpg": {
+    "condition": "blank_background",
+    "description": "Completely empty background with zero waste objects",
+    "width": 500,
+    "height": 350,
+    "ground_truth_boxes": []
+  }
+}

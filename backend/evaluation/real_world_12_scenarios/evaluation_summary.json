@@ -1,0 +1,290 @@
+{
+  "timestamp": "2026-11-22T02:59:48Z",
+  "metrics": {
+    "total_ground_truth": 17,
+    "total_detections": 30,
+    "true_positives": 10,
+    "false_positives": 20,
+    "false_negatives": 7,
+    "duplicate_count": 0,
+    "duplicate_rate": 0.0,
+    "precision": 0.3333,
+    "recall": 0.5882,
+    "detection_f1": 0.4255,
+    "mean_iou": 0.5995,
+    "crop_accuracy": 0.7,
+    "average_latency_ms": 1810.46
+  },
+  "confusion_matrix": {
+    "cardboard": {
+      "cardboard": 3,
+      "glass": 0,
+      "metal": 0,
+      "paper": 0,
+      "plastic": 0,
+      "organic": 0,
+      "trash": 0
+    },
+    "glass": {
+      "cardboard": 0,
+      "glass": 1,
+      "metal": 0,
+      "paper": 1,
+      "plastic": 0,
+      "organic": 0,
+      "trash": 0
+    },
+    "metal": {
+      "cardboard": 0,
+      "glass": 0,
+      "metal": 1,
+      "paper": 0,
+      "plastic": 0,
+      "organic": 0,
+      "trash": 0
+    },
+    "paper": {
+      "cardboard": 0,
+      "glass": 0,
+      "metal": 0,
+      "paper": 0,
+      "plastic": 0,
+      "organic": 0,
+      "trash": 0
+    },
+    "plastic": {
+      "cardboard": 0,
+      "glass": 1,
+      "metal": 0,
+      "paper": 0,
+      "plastic": 2,
+      "organic": 0,
+      "trash": 0
+    },
+    "organic": {
+      "cardboard": 0,
+      "glass": 0,
+      "metal": 0,
+      "paper": 0,
+      "plastic": 1,
+      "organic": 0,
+      "trash": 0
+    },
+    "trash": {
+      "cardboard": 0,
+      "glass": 0,
+      "metal": 0,
+      "paper": 0,
+      "plastic": 0,
+      "organic": 0,
+      "trash": 0
+    }
+  },
+  "per_class_stats": {
+    "cardboard": {
+      "gt": 3,
+      "detected_correct": 3,
+      "detected_total": 3
+    },
+    "glass": {
+      "gt": 4,
+      "detected_correct": 1,
+      "detected_total": 2
+    },
+    "metal": {
+      "gt": 4,
+      "detected_correct": 1,
+      "detected_total": 1
+    },
+    "paper": {
+      "gt": 0,
+      "detected_correct": 0,
+      "detected_total": 1
+    },
+    "plastic": {
+      "gt": 5,
+      "detected_correct": 2,
+      "detected_total": 3
+    },
+    "organic": {
+      "gt": 1,
+      "detected_correct": 0,
+      "detected_total": 0
+    },
+    "trash": {
+      "gt": 0,
+      "detected_correct": 0,
+      "detected_total": 0
+    }
+  },
+  "scenarios": [
+    {
+      "scenario": "Single glass tumbler",
+      "image": "01_single_glass_tumbler.jpg",
+      "gt_count": 1,
+      "detected_count": 5,
+      "tp": 1,
+      "fp": 4,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 0.2,
+      "recall": 1.0,
+      "latency_ms": 2892.5,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_01_single_glass_tumbler.jpg"
+    },
+    {
+      "scenario": "Single plastic bottle",
+      "image": "02_single_plastic_bottle.jpg",
+      "gt_count": 1,
+      "detected_count": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "latency_ms": 746.6,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_02_single_plastic_bottle.jpg"
+    },
+    {
+      "scenario": "Multiple plastic bottles",
+      "image": "03_multiple_plastic_bottles.jpg",
+      "gt_count": 2,
+      "detected_count": 3,
+      "tp": 1,
+      "fp": 2,
+      "fn": 1,
+      "duplicates": 0,
+      "precision": 0.333,
+      "recall": 0.5,
+      "latency_ms": 2602.9,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_03_multiple_plastic_bottles.jpg"
+    },
+    {
+      "scenario": "Multiple metal cans",
+      "image": "04_multiple_metal_cans.jpg",
+      "gt_count": 2,
+      "detected_count": 2,
+      "tp": 1,
+      "fp": 1,
+      "fn": 1,
+      "duplicates": 0,
+      "precision": 0.5,
+      "recall": 0.5,
+      "latency_ms": 1501.8,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_04_multiple_metal_cans.jpg"
+    },
+    {
+      "scenario": "Cardboard packaging",
+      "image": "05_cardboard_packaging.jpg",
+      "gt_count": 2,
+      "detected_count": 3,
+      "tp": 2,
+      "fp": 1,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 0.667,
+      "recall": 1.0,
+      "latency_ms": 2104.7,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_05_cardboard_packaging.jpg"
+    },
+    {
+      "scenario": "Crumpled paper",
+      "image": "06_crumpled_paper.jpg",
+      "gt_count": 1,
+      "detected_count": 2,
+      "tp": 1,
+      "fp": 1,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "latency_ms": 1392.1,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_06_crumpled_paper.jpg"
+    },
+    {
+      "scenario": "Banana peels and vegetable waste",
+      "image": "07_banana_peels_and_organic.jpg",
+      "gt_count": 1,
+      "detected_count": 1,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "latency_ms": 1014.0,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_07_banana_peels_and_organic.jpg"
+    },
+    {
+      "scenario": "Transparent plastic trays",
+      "image": "08_transparent_plastic_tray.jpg",
+      "gt_count": 1,
+      "detected_count": 6,
+      "tp": 0,
+      "fp": 6,
+      "fn": 1,
+      "duplicates": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "latency_ms": 4023.5,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_08_transparent_plastic_tray.jpg"
+    },
+    {
+      "scenario": "Mixed glass and plastic",
+      "image": "09_mixed_glass_and_plastic.jpg",
+      "gt_count": 2,
+      "detected_count": 3,
+      "tp": 0,
+      "fp": 3,
+      "fn": 2,
+      "duplicates": 0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "latency_ms": 2417.9,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_09_mixed_glass_and_plastic.jpg"
+    },
+    {
+      "scenario": "Multiple touching objects",
+      "image": "10_multiple_touching_objects.jpg",
+      "gt_count": 2,
+      "detected_count": 2,
+      "tp": 1,
+      "fp": 1,
+      "fn": 1,
+      "duplicates": 0,
+      "precision": 0.5,
+      "recall": 0.5,
+      "latency_ms": 1218.0,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_10_multiple_touching_objects.jpg"
+    },
+    {
+      "scenario": "Overlapping mixed waste",
+      "image": "11_overlapping_mixed_waste.jpg",
+      "gt_count": 2,
+      "detected_count": 2,
+      "tp": 1,
+      "fp": 1,
+      "fn": 1,
+      "duplicates": 0,
+      "precision": 0.5,
+      "recall": 0.5,
+      "latency_ms": 1802.4,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_11_overlapping_mixed_waste.jpg"
+    },
+    {
+      "scenario": "Empty/background-only images",
+      "image": "12_empty_background.jpg",
+      "gt_count": 0,
+      "detected_count": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "duplicates": 0,
+      "precision": 0.0,
+      "recall": 1.0,
+      "latency_ms": 8.9,
+      "visualization": "backend\\evaluation\\real_world_12_scenarios\\visualizations\\eval_12_empty_background.jpg"
+    }
+  ]
+}

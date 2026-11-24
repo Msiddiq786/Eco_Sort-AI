@@ -71,6 +71,10 @@ export interface BoundingBox {
   y1: number;
   x2: number;
   y2: number;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface ModelCoverage {
@@ -99,10 +103,15 @@ export interface DetectedObject {
   model_coverage?: ModelCoverage;
   crop_width?: number;
   crop_height?: number;
+  crop_image_base64?: string;
   recycling_status?: string;
   disposal_recommendation?: string;
   preparation_steps?: string[];
   recycling_decision: RecyclingDecision;
+  category?: string;
+  classification_confidence?: number;
+  probabilities?: Record<string, number>;
+  recommendation?: RecyclingDecision;
 }
 
 export interface RecyclingSummary {
@@ -128,7 +137,10 @@ export interface DetectResponse {
   model_versions: Record<string, string>;
   inference_time_ms: number;
   annotated_image_base64: string;
+  clean_image_base64?: string;
   detection_model_status: string;
+  success?: boolean;
+  image?: { width: number; height: number };
 }
 
 export type RecyclingPossibility =

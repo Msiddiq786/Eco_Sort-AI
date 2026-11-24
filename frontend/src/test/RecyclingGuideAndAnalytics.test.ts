@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { RECYCLING_GUIDE_MATERIALS } from '@/data/recyclingGuideData'
-import type { HistoryItem, WasteCategoryV2 } from '@/types'
+import type { HistoryItem } from '@/types'
 
 describe('Smart Recycling Guide Data Verification', () => {
   it('covers all 7 required waste categories plus hazardous items', () => {

@@ -53,6 +53,7 @@ class PredictResponse(BaseModel):
     image_path: str
     predicted_category: str
     confidence: float = Field(..., ge=0.0, le=1.0)
+    raw_ensemble_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     calibrated_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     vit_prediction: str
     clip_prediction: str
