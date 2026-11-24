@@ -11,6 +11,7 @@ import {
   Award,
   Compass,
   Leaf,
+  Sliders,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/impact',      label: 'Impact Tracker',        icon: Leaf },
   { to: '/history',     label: 'History & Audit',       icon: History },
   { to: '/performance', label: 'Model Metrics',         icon: BarChart3 },
+  { to: '/ensemble',    label: 'Ensemble Analysis',     icon: Sliders },
 ]
 
 export default function Sidebar() {

@@ -62,6 +62,7 @@ export interface PredictResponse {
   recycling_decision?: RecyclingDecision;
   model_agreement?: boolean | null;
   model_coverage?: ModelCoverage | null;
+  xai_explanation?: XAIExplanation | null;
   model_version: string;
   created_at: string;
 }
@@ -329,4 +330,104 @@ export interface ImpactSummary {
   waterSavedLiters: number;
   treesSaved: number;
   landfillDivertedM3: number;
+}
+
+// ── XAI Types ──────────────────────────────────────────────────────────
+
+export interface XAITopEntry {
+  category: string;
+  score: number;
+  percentage: number;
+}
+
+export interface XAICLIPRankedEntry {
+  category: string;
+  score: number;
+  percentage: number;
+  rank: number;
+}
+
+export interface XAIVITExplanation {
+  predicted: string;
+  confidence: number;
+  weight_in_ensemble: number;
+  top3: XAITopEntry[];
+}
+
+export interface XAICLIPExplanation {
+  predicted: string;
+  confidence: number;
+  weight_in_ensemble: number;
+  note: string;
+  ranked_categories: XAICLIPRankedEntry[];
+}
+
+export interface XAIEnsembleExplanation {
+  formula: string;
+  top3: XAITopEntry[];
+}
+
+export interface XAIExplanation {
+  predicted_category: string;
+  confidence: number;
+  reasoning_text: string;
+  models_agree: boolean;
+  attention_heatmap_base64?: string | null;
+  attention_method: string;
+  attention_note: string;
+  vit_explanation: XAIVITExplanation;
+  clip_explanation: XAICLIPExplanation;
+  ensemble_explanation: XAIEnsembleExplanation;
+}
+
+// ── Ensemble Types ─────────────────────────────────────────────────────
+
+export interface EnsembleConfig {
+  vit_weight: number;
+  clip_weight: number;
+  macro_f1?: number | null;
+  accuracy?: number | null;
+  source: 'default' | 'validated';
+  optimized_at?: string | null;
+}
+
+export interface GridResultEntry {
+  vit_weight: number;
+  clip_weight: number;
+  macro_f1: number;
+  accuracy: number;
+}
+
+export interface EnsembleEvaluation {
+  available: boolean;
+  best_vit_weight?: number | null;
+  best_clip_weight?: number | null;
+  best_macro_f1?: number | null;
+  best_accuracy?: number | null;
+  baseline_vit_weight?: number | null;
+  baseline_clip_weight?: number | null;
+  baseline_macro_f1?: number | null;
+  baseline_accuracy?: number | null;
+  num_samples?: number | null;
+  all_results?: GridResultEntry[] | null;
+}
+
+// ── Smart Bin Recommendation Types ────────────────────────────────────
+
+export interface BinRecommendation {
+  category: string;
+  bin_color: string;
+  bin_label: string;
+  stream: string;
+  disposal_status: string;
+  status_label: string;
+  action: string;
+  preparation_steps: string[];
+  safety_info?: string | null;
+  eco_tip: string;
+  regional_caveats: string;
+}
+
+export interface AllRecommendationsResponse {
+  categories: BinRecommendation[];
 }

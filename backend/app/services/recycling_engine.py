@@ -254,3 +254,97 @@ def get_recycling_decision(
         safety_info=rule.get("safety_info"),
         regional_caveats=rule["regional_caveats"],
     )
+
+
+ECO_TIPS: Dict[str, str] = {
+    "cardboard": (
+        "Reuse cardboard boxes for storage or moving before recycling. "
+        "One tonne of recycled cardboard saves around 17 trees and 7,000 litres of water."
+    ),
+    "glass": (
+        "Glass can be recycled indefinitely with no quality loss. "
+        "Reuse glass jars for food storage to reduce single-use packaging."
+    ),
+    "metal": (
+        "Recycling one aluminium can saves enough energy to run a TV for 3 hours. "
+        "Look for local scrap dealers (kabadiwalas) who pay cash for clean metal scrap."
+    ),
+    "paper": (
+        "One tonne of recycled paper saves 17 trees and 26,000 litres of water. "
+        "Use both sides of paper before recycling; prefer digital documents where possible."
+    ),
+    "plastic": (
+        "Reduce single-use plastics first. Carry a reusable bag. "
+        "Check the RIC code — #1 (PET) and #2 (HDPE) are the most widely accepted."
+    ),
+    "organic": (
+        "Home composting diverts food waste from landfill, reduces methane emissions, "
+        "and produces free nutrient-rich compost for plants."
+    ),
+    "trash": (
+        "Before discarding, consider repair, donation, or upcycling. "
+        "Reduce waste at source by choosing products with minimal packaging."
+    ),
+    "hazardous": (
+        "Many retailers (electronics stores, battery shops) offer free drop-off programs. "
+        "Never mix hazardous waste with regular household bins."
+    ),
+    "unknown": (
+        "When uncertain, consult your local municipal waste management portal. "
+        "Many cities now have waste-sorting helplines or apps."
+    ),
+}
+
+BIN_COLORS: Dict[str, str] = {
+    "cardboard": "#1565C0",
+    "glass": "#1565C0",
+    "metal": "#1565C0",
+    "paper": "#1565C0",
+    "plastic": "#1565C0",
+    "organic": "#2E7D32",
+    "trash": "#212121",
+    "hazardous": "#C62828",
+    "unknown": "#F57F17",
+}
+
+BIN_STREAM: Dict[str, str] = {
+    "cardboard": "Dry Recyclable",
+    "glass": "Dry Recyclable",
+    "metal": "Dry Recyclable",
+    "paper": "Dry Recyclable",
+    "plastic": "Dry Recyclable",
+    "organic": "Wet / Compostable",
+    "trash": "Residual / Non-Recyclable",
+    "hazardous": "Hazardous / Special Collection",
+    "unknown": "Requires Manual Inspection",
+}
+
+
+def get_bin_recommendation(category: str) -> Dict[str, Any]:
+    """
+    Return a structured smart-bin recommendation dictionary for *category*.
+    Raises KeyError if *category* is not present in MATERIAL_RULES.
+    """
+    cat_lower = category.lower().strip()
+    if cat_lower not in MATERIAL_RULES:
+        raise KeyError(f"Unsupported waste category: {category}")
+
+    rule = MATERIAL_RULES[cat_lower]
+    status_val = (
+        rule["disposal_status"].value
+        if isinstance(rule["disposal_status"], DisposalStatus)
+        else str(rule["disposal_status"])
+    )
+    return {
+        "category": cat_lower,
+        "bin_color": BIN_COLORS.get(cat_lower, "#9E9E9E"),
+        "bin_label": rule["disposal_bin"],
+        "stream": BIN_STREAM.get(cat_lower, "General Waste"),
+        "disposal_status": status_val,
+        "status_label": rule["status_label"],
+        "action": rule["action"],
+        "preparation_steps": list(rule["preparation_steps"]),
+        "safety_info": rule.get("safety_info"),
+        "eco_tip": ECO_TIPS.get(cat_lower, "Reduce, reuse, recycle."),
+        "regional_caveats": rule["regional_caveats"],
+    }

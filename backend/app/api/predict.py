@@ -4,8 +4,9 @@ POST /api/predict — accept an image and return the ensemble classification.
 from __future__ import annotations
 
 import logging
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -22,7 +23,9 @@ from app.schemas.predict import (
     ModelCoverage,
     PredictResponse,
     RecyclingDecisionSchema,
+    XAIExplanation,
 )
+from app.services.ensemble_optimizer import load_ensemble_config
 from app.services.image_storage import save_upload, validate_upload
 from app.services.prediction_store import create_prediction
 from app.services.recommendation import get_recommendation
@@ -35,6 +38,7 @@ router = APIRouter()
 @router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_200_OK)
 async def predict_image(
     file: UploadFile,
+    include_explanation: bool = Query(False, description="If true, run XAI attention rollout and include explanation in the response."),
     db: AsyncSession = Depends(get_db),
     registry=Depends(get_model_registry),
 ):
@@ -106,6 +110,10 @@ async def predict_image(
         clip_pred = max(vit_probs, key=vit_probs.get)
 
     # ── 8. Dynamic Model Coverage, Disagreement, & Organic Policy ────────────
+    active_cfg = load_ensemble_config()
+    active_vit_w = float(active_cfg.get("vit_weight", settings.ENSEMBLE_VIT_WEIGHT))
+    active_clip_w = float(active_cfg.get("clip_weight", settings.ENSEMBLE_CLIP_WEIGHT))
+
     vit_top = max(vit_probs, key=vit_probs.get)
     vit_top_prob = vit_probs[vit_top]
 
@@ -180,7 +188,7 @@ async def predict_image(
 
     elif vit_num_classes >= 7 and (clip_pred == "organic" or vit_top == "organic"):
         # Dual 7-class support
-        fused = fuse(vit_probs, clip_probs)
+        fused = fuse(vit_probs, clip_probs, vit_weight=active_vit_w, clip_weight=active_clip_w)
         final_cat = fused.predicted_category
         raw_ensemble_conf = float(fused.confidence)
         final_conf = min(0.985, fused.confidence)
@@ -204,7 +212,12 @@ async def predict_image(
 
     else:
         # Standard 6-class shared evaluation
-        fused = fuse(vit_probs, {k: clip_probs.get(k, 0.0) for k in vit_probs})
+        fused = fuse(
+            vit_probs,
+            {k: clip_probs.get(k, 0.0) for k in vit_probs},
+            vit_weight=active_vit_w,
+            clip_weight=active_clip_w,
+        )
         final_cat = fused.predicted_category
         raw_ensemble_conf = float(fused.confidence)
         final_conf = min(0.985, fused.confidence)
@@ -275,6 +288,42 @@ async def predict_image(
     elif not models_agree and not is_organic_v1_bypass:
         ood_warning = f"Caution: Model disagreement between {vit_prediction_label} and {clip_prediction_label}."
 
+    # ── 11. Optional XAI explanation ─────────────────────────────────────────
+    xai_explanation_obj: Optional[XAIExplanation] = None
+    if include_explanation and registry.ready:
+        try:
+            from app.ml.xai import build_xai_explanation, generate_attention_heatmap
+
+            heatmap_b64 = None
+            try:
+                heatmap_b64, _ = generate_attention_heatmap(
+                    model=registry.vit_model,
+                    processor=registry.vit_processor,
+                    pil_image=pil_image,
+                )
+            except Exception as hm_exc:
+                logger.warning("Attention heatmap failed (non-fatal): %s", hm_exc)
+
+            all_keys = set(list(vit_probs.keys()) + list(clip_probs.keys()))
+            ensemble_probs = {
+                k: round(active_vit_w * vit_probs.get(k, 0.0) + active_clip_w * clip_probs.get(k, 0.0), 4)
+                for k in all_keys
+            }
+
+            xai_dict = build_xai_explanation(
+                predicted_category=final_cat,
+                confidence=final_conf,
+                vit_probs=vit_probs,
+                clip_probs=clip_probs,
+                ensemble_probs=ensemble_probs,
+                attention_heatmap_b64=heatmap_b64,
+                vit_weight=active_vit_w,
+                clip_weight=active_clip_w,
+            )
+            xai_explanation_obj = XAIExplanation(**xai_dict)
+        except Exception as xai_exc:
+            logger.warning("XAI explanation failed (non-fatal): %s", xai_exc)
+
     return PredictResponse(
         id=record.id,
         filename=safe_name,
@@ -299,6 +348,7 @@ async def predict_image(
         recycling_decision=RecyclingDecisionSchema(**rec_decision.to_dict()),
         model_agreement=models_agree,
         model_coverage=coverage_obj,
+        xai_explanation=xai_explanation_obj,
         model_version=settings.MODEL_VERSION,
         created_at=record.created_at,
     )

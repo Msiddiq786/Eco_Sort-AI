@@ -1,8 +1,9 @@
 """ORM models for the SQLite database."""
 import json
 from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import DateTime, Float, Index, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.connection import Base
@@ -37,3 +38,41 @@ class Prediction(Base):
 
     def probabilities_dict(self) -> dict:
         return json.loads(self.class_probabilities)
+
+
+class EnsembleConfig(Base):
+    """Stores active and historical validated ensemble weight configurations."""
+
+    __tablename__ = "ensemble_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    vit_weight: Mapped[float] = mapped_column(Float, nullable=False, default=0.70)
+    clip_weight: Mapped[float] = mapped_column(Float, nullable=False, default=0.30)
+    macro_f1: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    accuracy: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    source: Mapped[str] = mapped_column(String(30), nullable=False, default="default")
+    optimized_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class XAIResult(Base):
+    """Stores XAI metadata and reasoning generated for predictions."""
+
+    __tablename__ = "xai_results"
+    __table_args__ = (
+        Index("ix_xai_results_prediction_id", "prediction_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    prediction_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("predictions.id", ondelete="CASCADE"), nullable=False
+    )
+    attention_method: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="attention_rollout"
+    )
+    models_agree: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    reasoning_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

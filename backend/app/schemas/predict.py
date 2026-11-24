@@ -4,7 +4,7 @@ Pydantic schemas for prediction request / response.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_serializer
 
@@ -70,10 +70,61 @@ class PredictResponse(BaseModel):
     recycling_decision: Optional[RecyclingDecisionSchema] = None
     model_agreement: Optional[bool] = None
     model_coverage: Optional[ModelCoverage] = None
+    xai_explanation: Optional[XAIExplanation] = None
     model_version: str
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# XAI Schemas
+# ---------------------------------------------------------------------------
+
+class XAITopEntry(BaseModel):
+    category: str
+    score: float
+    percentage: float
+
+
+class XAIVITExplanation(BaseModel):
+    predicted: str
+    confidence: float
+    weight_in_ensemble: float
+    top3: List[XAITopEntry]
+
+
+class XAICLIPRankedEntry(BaseModel):
+    category: str
+    score: float
+    percentage: float
+    rank: int
+
+
+class XAICLIPExplanation(BaseModel):
+    predicted: str
+    confidence: float
+    weight_in_ensemble: float
+    note: str
+    ranked_categories: List[XAICLIPRankedEntry]
+
+
+class XAIEnsembleExplanation(BaseModel):
+    formula: str
+    top3: List[XAITopEntry]
+
+
+class XAIExplanation(BaseModel):
+    predicted_category: str
+    confidence: float
+    reasoning_text: str
+    models_agree: bool
+    attention_heatmap_base64: Optional[str] = None
+    attention_method: str = "attention_rollout"
+    attention_note: str
+    vit_explanation: XAIVITExplanation
+    clip_explanation: XAICLIPExplanation
+    ensemble_explanation: XAIEnsembleExplanation
 
 
 class ModelInfoResponse(BaseModel):

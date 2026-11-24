@@ -1,11 +1,16 @@
 import axios from 'axios';
 import type {
+  AllRecommendationsResponse,
+  BinRecommendation,
+  EnsembleConfig,
+  EnsembleEvaluation,
   HealthResponse,
   ModelInfoResponse,
   PaginatedHistory,
   PredictResponse,
   StatsResponse,
   DetectResponse,
+  XAIExplanation,
 } from '@/types';
 
 const api = axios.create({
@@ -21,11 +26,13 @@ export const getModelInfo = () =>
   api.get<ModelInfoResponse>('/model-info').then(r => r.data);
 
 // ── Predict ───────────────────────────────────────────────────────────
-export const predictImage = (file: File) => {
+export const predictImage = (file: File, includeExplanation = false) => {
   const form = new FormData();
   form.append('file', file);
+  const params = includeExplanation ? { include_explanation: true } : {};
   return api.post<PredictResponse>('/predict', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    params,
   }).then(r => r.data);
 };
 
@@ -70,5 +77,37 @@ export const getAllHistory = async (): Promise<import('@/types').HistoryItem[]> 
 
 export const deleteHistoryItem = (id: number) =>
   api.delete(`/history/${id}`);
+
+// ── XAI ───────────────────────────────────────────────────────────────
+export const getExplanation = (predictionId: number, includeHeatmap = true) =>
+  api.get<XAIExplanation>(`/explain/${predictionId}`, {
+    params: { include_heatmap: includeHeatmap },
+  }).then(r => r.data);
+
+export const explainImage = (file: File, includeHeatmap = true) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api.post<XAIExplanation>('/explain', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    params: { include_heatmap: includeHeatmap },
+  }).then(r => r.data);
+};
+
+// ── Ensemble ──────────────────────────────────────────────────────────
+export const getEnsembleConfig = () =>
+  api.get<EnsembleConfig>('/ensemble/config').then(r => r.data);
+
+export const getEnsembleEvaluation = () =>
+  api.get<EnsembleEvaluation>('/ensemble/evaluation').then(r => r.data);
+
+export const optimizeEnsemble = () =>
+  api.post<{ status: string; message: string }>('/ensemble/optimize').then(r => r.data);
+
+// ── Recommendations ───────────────────────────────────────────────────
+export const getRecommendation = (category: string) =>
+  api.get<BinRecommendation>(`/recommendations/${category}`).then(r => r.data);
+
+export const getAllRecommendations = () =>
+  api.get<AllRecommendationsResponse>('/recommendations').then(r => r.data);
 
 export default api;

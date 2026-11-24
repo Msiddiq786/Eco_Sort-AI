@@ -9,6 +9,7 @@ import LearningPage from '@/pages/LearningPage'
 import RewardsPage from '@/pages/RewardsPage'
 import DisposalGuidePage from '@/pages/DisposalGuidePage'
 import ImpactDashboardPage from '@/pages/ImpactDashboardPage'
+import EnsemblePage from '@/pages/EnsemblePage'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/impact" element={<ImpactDashboardPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/performance" element={<PerformancePage />} />
+        <Route path="/ensemble" element={<EnsemblePage />} />
       </Routes>
     </Layout>
   )

@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
-import type { PredictResponse } from '@/types'
+import { useEffect, useMemo, useState } from 'react'
+import type { BinRecommendation, PredictResponse } from '@/types'
+import { getRecommendation } from '@/services/api'
 import { capitalize, CATEGORY_COLORS } from '@/lib/utils'
+import { ConfidenceGauge } from '@/components/xai/ConfidenceGauge'
 import {
   Recycle,
   CheckCircle2,
@@ -62,6 +64,24 @@ function CategoryIcon({ category, className = 'h-8 w-8' }: { category: string; c
 }
 
 export default function ResultCard({ result, imageUrl }: Props) {
+  const [smartBin, setSmartBin] = useState<BinRecommendation | null>(null)
+
+  useEffect(() => {
+    let active = true
+    const cat = result.predicted_category?.toLowerCase()
+    if (!cat) return
+    getRecommendation(cat)
+      .then((rec) => {
+        if (active) setSmartBin(rec)
+      })
+      .catch(() => {
+        if (active) setSmartBin(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [result.predicted_category])
+
   // 1. Probabilities calculation & sorting
   const rawConfidence = result.confidence
   const pctValue = rawConfidence * 100
@@ -149,14 +169,24 @@ export default function ResultCard({ result, imageUrl }: Props) {
 
   // Recycling recommendation & structured decision data
   const decision = result.recycling_decision
-  const displayStatus = decision?.status_label ?? 'Conditionally Recyclable'
-  const actionText = decision?.action ?? (result.recycling_recommendation?.split('.')[0] + '.')
-  const prepSteps = decision?.preparation_steps ?? [
+  const displayStatus = decision?.status_label ?? smartBin?.status_label ?? 'Conditionally Recyclable'
+  const actionText = decision?.action ?? smartBin?.action ?? (result.recycling_recommendation?.split('.')[0] + '.')
+  const prepSteps = decision?.preparation_steps ?? smartBin?.preparation_steps ?? [
     'Empty contents and rinse clean before disposal.',
     'Remove non-recyclable caps, wraps, or liners.',
   ]
-  const disposalBinText = decision?.disposal_bin ?? 'Place in the designated Dry Waste recycling stream.'
-  const regionalCaveat = decision?.regional_caveats ?? 'Recycling acceptance may vary by your local municipal rules.'
+  const disposalBinText = decision?.disposal_bin ?? smartBin?.bin_label ?? 'Place in the designated Dry Waste recycling stream.'
+  const regionalCaveat = decision?.regional_caveats ?? smartBin?.regional_caveats ?? 'Recycling acceptance may vary by your local municipal rules.'
+  const safetyInfo = decision?.safety_info ?? smartBin?.safety_info
+  const top3Alternatives = rankedProbabilities.slice(0, 3)
+  const needsConfidenceNotice = Boolean(
+    result.is_low_confidence ||
+    result.is_ambiguous ||
+    result.is_out_of_distribution ||
+    result.confidence_status === 'low_confidence' ||
+    result.confidence_status === 'ambiguous' ||
+    result.confidence_status === 'out_of_distribution'
+  )
 
   return (
     <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-6">
@@ -274,6 +304,47 @@ export default function ResultCard({ result, imageUrl }: Props) {
           )}
         </div>
       </div>
+
+      {/* ── CONFIDENCE-AWARE / UNKNOWN / OOD ALERT PANEL ────────────────────── */}
+      {needsConfidenceNotice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row items-center gap-4">
+          <div className="shrink-0">
+            <ConfidenceGauge
+              confidence={rawConfidence}
+              confidenceStatus={result.confidence_status ?? (result.is_out_of_distribution ? 'out_of_distribution' : 'low_confidence')}
+              size={92}
+            />
+          </div>
+          <div className="flex-1 space-y-2 text-xs text-amber-900">
+            <div className="flex items-center gap-1.5 font-bold text-sm">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>
+                {result.is_out_of_distribution
+                  ? 'Unknown / Out-of-Distribution Item Detected'
+                  : result.is_ambiguous
+                    ? 'Ambiguous Classification — Close Alternatives'
+                    : 'Low Confidence Prediction — Manual Verification Recommended'}
+              </span>
+            </div>
+            <p className="text-amber-800 leading-relaxed">
+              {result.ood_warning ??
+                'Confidence is below the automated sorting threshold. Review the top candidate materials below before bin placement.'}
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {top3Alternatives.map(([cat, prob], idx) => (
+                <span
+                  key={cat}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-slate-800"
+                >
+                  <span className="text-amber-600">#{idx + 1}</span>
+                  <span>{capitalize(cat)}</span>
+                  <span className="font-mono text-slate-500">{(prob * 100).toFixed(1)}%</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── SECTION B: MODEL AGREEMENT ──────────────────────────────────────── */}
       <div className="space-y-2.5">
@@ -477,11 +548,43 @@ export default function ResultCard({ result, imageUrl }: Props) {
             {/* Disposal */}
             <div className="flex items-start gap-2.5">
               <Recycle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-slate-900 font-semibold">Disposal: </strong>
-                <span>{disposalBinText}</span>
+              <div className="space-y-1">
+                <div>
+                  <strong className="text-slate-900 font-semibold">Smart Disposal Bin: </strong>
+                  <span>{disposalBinText}</span>
+                </div>
+                {smartBin && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+                      style={{ backgroundColor: smartBin.bin_color }}
+                    >
+                      {smartBin.stream}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+
+            {safetyInfo && (
+              <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/70 p-2.5 text-[11px] text-rose-800">
+                <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Safety: </strong>
+                  {safetyInfo}
+                </span>
+              </div>
+            )}
+
+            {smartBin?.eco_tip && (
+              <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-white/80 p-2.5 text-[11px] text-emerald-900">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Eco Tip: </strong>
+                  {smartBin.eco_tip}
+                </span>
+              </div>
+            )}
 
             {/* Regional Note */}
             <div className="flex items-start gap-2.5 pt-1 text-[11px] text-slate-500 border-t border-emerald-100">
