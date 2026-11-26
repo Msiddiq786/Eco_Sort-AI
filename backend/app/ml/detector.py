@@ -25,6 +25,7 @@ from __future__ import annotations
 import base64
 import io
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -138,6 +139,28 @@ def _find_cached_trash_seg_path() -> Optional[Path]:
             model = _load_yolo_cached(pt)
             if model is not None and len(getattr(model, "names", {})) == 5:
                 return pt
+
+    is_offline = (
+        os.getenv("HF_HUB_OFFLINE", "").lower() in {"1", "true", "yes"}
+        or os.getenv("TRANSFORMERS_OFFLINE", "").lower() in {"1", "true", "yes"}
+    )
+    if not is_offline:
+        try:
+            from app.core.config import settings
+            if getattr(settings, "AUTO_DOWNLOAD_MODELS", True) and getattr(settings, "TRASH_SEG_HF_REPO_ID", None):
+                from huggingface_hub import snapshot_download
+                dl_dir = snapshot_download(
+                    repo_id=settings.TRASH_SEG_HF_REPO_ID,
+                    allow_patterns=["*.pt"],
+                    token=getattr(settings, "HF_TOKEN", None),
+                )
+                for pt in Path(dl_dir).rglob("*.pt"):
+                    if pt.stat().st_size > 1_000_000:
+                        model = _load_yolo_cached(pt)
+                        if model is not None:
+                            return pt
+        except Exception as exc:
+            logger.debug("Optional trash-seg HF hub download skipped/failed: %s", exc)
     return None
 
 

@@ -61,7 +61,7 @@ export default function RecyclingSummaryCard({ summary }: Props) {
           {Object.entries(category_counts).map(([cat, count]) => (
             <div
               key={cat}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold border shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold border shadow-sm"
               style={{
                 backgroundColor: `${CATEGORY_COLORS[cat] ?? '#16A34A'}15`,
                 borderColor: `${CATEGORY_COLORS[cat] ?? '#16A34A'}40`,

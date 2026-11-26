@@ -52,7 +52,7 @@ export default function HazardousWarning() {
             return (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-white border border-rose-200 shadow-xs flex flex-col justify-between"
+                className="p-3.5 rounded-xl bg-white border border-rose-200 shadow-sm flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-2 text-rose-700 font-semibold text-xs mb-1">

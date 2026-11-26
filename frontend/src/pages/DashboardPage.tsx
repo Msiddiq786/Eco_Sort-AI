@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import {
   LayoutDashboard,
   Sparkles,
-  Download,
-  AlertCircle,
+  ScanLine,
+  Crosshair,
 } from 'lucide-react'
 import { getAllHistory, getStats } from '@/services/api'
 import type {
@@ -12,6 +13,8 @@ import type {
   AnalyticsDateFilter,
 } from '@/types'
 import { CATEGORY_COLORS } from '@/lib/utils'
+import PageHeader from '@/components/ui/PageHeader'
+import StatusBanner from '@/components/ui/StatusBanner'
 import DateRangeFilter from '@/components/dashboard/DateRangeFilter'
 import AnalyticsSummaryCards, {
   type SummaryMetrics,
@@ -42,12 +45,10 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Date Filtering State
   const [dateFilter, setDateFilter] = useState<AnalyticsDateFilter>('all')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
 
-  // Fetch full dataset from backend
   const loadData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true)
     else setLoading(true)
@@ -63,7 +64,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Failed to load analytics data:', err)
       setError(
-        'Could not load prediction telemetry from backend. Ensure the FastAPI server is running on :8000.'
+        'Could not load prediction telemetry from backend. Ensure the FastAPI server is running on port 8000.'
       )
     } finally {
       setLoading(false)
@@ -75,7 +76,6 @@ export default function DashboardPage() {
     loadData()
   }, [loadData])
 
-  // Filter items by Date Range
   const filteredItems = useMemo(() => {
     if (!allItems.length) return []
     if (dateFilter === 'all') return allItems
@@ -106,7 +106,6 @@ export default function DashboardPage() {
     })
   }, [allItems, dateFilter, customStart, customEnd])
 
-  // Calculate 6 Summary KPIs dynamically from filtered items
   const summaryMetrics: SummaryMetrics = useMemo(() => {
     const total = filteredItems.length
     if (total === 0) {
@@ -123,7 +122,6 @@ export default function DashboardPage() {
       }
     }
 
-    // Counts per category
     const catCounts: Record<string, number> = {}
     let confSum = 0
     let recyclableCount = 0
@@ -144,7 +142,6 @@ export default function DashboardPage() {
       }
     }
 
-    // Most detected category
     let topCat = ''
     let topCount = 0
     for (const [cat, cnt] of Object.entries(catCounts)) {
@@ -173,7 +170,6 @@ export default function DashboardPage() {
     }
   }, [filteredItems])
 
-  // Calculate 7-Class Distribution dynamically
   const categoryDistribution: CategoryDataPoint[] = useMemo(() => {
     const total = filteredItems.length
     const counts: Record<string, number> = {}
@@ -201,7 +197,6 @@ export default function DashboardPage() {
     })
   }, [filteredItems])
 
-  // Export Filtered Records as CSV
   const handleExportCsv = useCallback(() => {
     if (!filteredItems.length) return
 
@@ -259,54 +254,34 @@ export default function DashboardPage() {
   }, [filteredItems, dateFilter])
 
   return (
-    <div className="space-y-6">
-      {/* Page Title & Live Badge */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-              <Sparkles className="h-3 w-3" />
-              Live Telemetry & Auditing
-            </span>
-            {stats && (
-              <span className="text-[11px] font-medium text-slate-500">
-                Lifetime Records: <strong>{stats.total_predictions}</strong>
-              </span>
-            )}
-          </div>
-          <h1 className="text-2xl font-heading font-extrabold tracking-tight text-slate-900 flex items-center gap-2.5">
-            <LayoutDashboard className="h-6 w-6 text-emerald-600" />
-            Advanced Analytics Dashboard
-          </h1>
-          <p className="text-slate-600 text-sm mt-1 max-w-2xl leading-relaxed">
-            Real-world performance metrics, temporal classification trends, circular economy insights, and full audit trail from production scans.
-          </p>
-        </div>
+    <div className="space-y-6 pb-8">
+      <PageHeader
+        eyebrow="Live Telemetry & Auditing"
+        eyebrowIcon={Sparkles}
+        badge={stats ? `${stats.total_predictions} Lifetime Scans` : undefined}
+        icon={LayoutDashboard}
+        title="Analytics Dashboard"
+        subtitle="Real-world classification telemetry, temporal trends, circular economy disposition insights, and full dual-model audit history."
+        actions={
+          <>
+            <Link to="/classify" className="btn-primary text-xs px-3.5 py-2">
+              <ScanLine className="h-4 w-4" />
+              <span>Classify Item</span>
+            </Link>
+            <Link to="/detect" className="btn-secondary text-xs px-3.5 py-2">
+              <Crosshair className="h-4 w-4 text-ecosort-emerald" />
+              <span>Multi-Object Scan</span>
+            </Link>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          <button
-            onClick={handleExportCsv}
-            disabled={filteredItems.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition disabled:opacity-40"
-          >
-            <Download className="h-4 w-4" />
-            <span>Export Analytics CSV</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Error banner */}
       {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-bold">Backend Connection Warning</p>
-            <p className="mt-0.5">{error}</p>
-          </div>
-        </div>
+        <StatusBanner variant="error" title="Backend Connection Warning">
+          {error}
+        </StatusBanner>
       )}
 
-      {/* Date Filter & Window Selection */}
       <DateRangeFilter
         dateFilter={dateFilter}
         onFilterChange={setDateFilter}
@@ -320,10 +295,8 @@ export default function DashboardPage() {
         isRefreshing={isRefreshing}
       />
 
-      {/* 6 Key Analytics KPI Summary Cards */}
       <AnalyticsSummaryCards metrics={summaryMetrics} loading={loading} />
 
-      {/* Two-Column Visual Analytics: 7-Class Distribution & Timeline Trends */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CategoryDistributionChart
           distribution={categoryDistribution}
@@ -333,10 +306,8 @@ export default function DashboardPage() {
         <ScanActivityTrends items={filteredItems} loading={loading} />
       </div>
 
-      {/* Recycling Insights: Decision Engine Statuses */}
       <RecyclingInsightsSection items={filteredItems} loading={loading} />
 
-      {/* Real Scan Activity Table with Dual-Model Inspection & Pagination */}
       <RecentScanActivityTable
         items={filteredItems}
         loading={loading}

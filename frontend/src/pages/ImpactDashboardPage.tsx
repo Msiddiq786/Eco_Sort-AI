@@ -7,6 +7,7 @@ import {
 } from '@/services/ecoStorage'
 import type { WasteWeightLog } from '@/types'
 import { capitalize, CATEGORY_COLORS } from '@/lib'
+import PageHeader from '@/components/ui/PageHeader'
 import ImpactSummaryCards from '@/components/impact/ImpactSummaryCards'
 import MaterialWeightChart from '@/components/impact/MaterialWeightChart'
 import MethodologyAccordion from '@/components/impact/MethodologyAccordion'
@@ -29,75 +30,66 @@ export default function ImpactDashboardPage() {
   const summary = calculateImpactSummary(logs)
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Leaf className="h-6 w-6 text-primary" />
-            Environmental Impact Dashboard
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Track real diverted material quantities and view verifiable greenhouse gas, water, and landfill savings.
-          </p>
-        </div>
+    <div className="space-y-6 pb-10">
+      <PageHeader
+        eyebrow="EPA WARM & DEFRA Factors"
+        eyebrowIcon={Leaf}
+        badge="Local Browser Log"
+        icon={Leaf}
+        title="Environmental Impact Tracker"
+        subtitle="Record diverted material weights locally in your browser to estimate greenhouse gas, water, tree, and landfill savings."
+        actions={
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="btn-primary text-xs px-4 py-2.5"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Log Recycled Weight</span>
+          </button>
+        }
+      />
 
-        <button
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors self-start sm:self-auto"
-        >
-          <PlusCircle className="h-4 w-4" /> Log Recycled Weight
-        </button>
-      </div>
-
-      {/* Summary Cards */}
       <ImpactSummaryCards summary={summary} />
 
-      {/* Material Breakdown & Charts */}
       <MaterialWeightChart logs={logs} />
 
-      {/* Verified Calculation Methodology Accordion */}
       <MethodologyAccordion />
 
-      {/* User Logs Table */}
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="card-eco overflow-hidden">
+        <div className="section-header">
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-emerald-600" />
-            <h3 className="font-heading font-bold text-base text-slate-800">
-              User Logged Material History
-            </h3>
+            <FileText className="h-4 w-4 text-ecosort-emerald" />
+            <h3 className="section-title">Logged Material Weight History</h3>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {logs.length} logged entries
-          </span>
+          <span className="text-xs text-slate-500">{logs.length} logged entries</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs sm:text-sm">
-            <thead className="bg-slate-50/70 border-b border-border text-slate-600">
+            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600">
               <tr>
-                <th className="text-left px-4 py-2.5 font-semibold">Material</th>
-                <th className="text-left px-4 py-2.5 font-semibold">Weight</th>
-                <th className="text-left px-4 py-2.5 font-semibold">Logged Date</th>
-                <th className="text-left px-4 py-2.5 font-semibold">Notes / Description</th>
-                <th className="text-right px-4 py-2.5 font-semibold">Actions</th>
+                <th className="text-left px-5 py-3 font-semibold">Material</th>
+                <th className="text-left px-5 py-3 font-semibold">Weight</th>
+                <th className="text-left px-5 py-3 font-semibold">Logged Date</th>
+                <th className="text-left px-5 py-3 font-semibold">Notes / Description</th>
+                <th className="text-right px-5 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-slate-100">
               {!logs.length ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No weight entries recorded yet. Click "Log Recycled Weight" above to start tracking!
+                  <td colSpan={5} className="text-center py-8 text-slate-400">
+                    No weight entries recorded yet. Click &quot;Log Recycled Weight&quot; above to start tracking!
                   </td>
                 </tr>
               ) : (
                 logs.map(log => {
-                  const color = CATEGORY_COLORS[log.category] ?? '#888'
+                  const color = CATEGORY_COLORS[log.category] ?? '#64748B'
                   const dateStr = new Date(log.loggedAt).toLocaleDateString()
                   return (
                     <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-5 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span
                             className="h-2.5 w-2.5 rounded-full"
@@ -109,24 +101,25 @@ export default function ImpactDashboardPage() {
                         </div>
                       </td>
 
-                      <td className="px-4 py-3 font-mono font-semibold text-emerald-800 whitespace-nowrap">
+                      <td className="px-5 py-3 font-mono font-semibold text-ecosort-emerald whitespace-nowrap">
                         {log.weightGrams >= 1000
                           ? `${(log.weightGrams / 1000).toFixed(2)} kg`
                           : `${log.weightGrams} g`}
                       </td>
 
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                      <td className="px-5 py-3 text-slate-500 whitespace-nowrap">
                         {dateStr}
                       </td>
 
-                      <td className="px-4 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-slate-600">
                         {log.note || '—'}
                       </td>
 
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <td className="px-5 py-3 text-right whitespace-nowrap">
                         <button
+                          type="button"
                           onClick={() => handleDelete(log.id)}
-                          className="p-1 rounded text-rose-600 hover:bg-rose-50 transition-colors"
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"
                           title="Delete Entry"
                         >
                           <Trash2 className="h-4 w-4" />

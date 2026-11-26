@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🌿 EcoSort AI
+<img src="frontend/public/logo.svg" alt="EcoSort AI Logo" width="260" />
+
+# EcoSort AI
 ### Smart Waste Segregation Using Vision Transformer Ensemble, Foundation Models, Explainable AI & Multi-Object Detection
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -99,22 +101,25 @@ All numbers below come directly from the evaluation artifacts in [`backend/evalu
 
 ---
 
-## 🖥️ Web Application Pages
+## 🖥️ Web Application & Brand Assets
 
-The React + Vite frontend provides 10 routes styled around a crisp Eco-Tech palette (`#14532D` Forest, `#16A34A` Emerald, `#D9F99D` Lime, `#F7F9F5` Canvas):
+The React + Vite frontend provides 10 routes styled around a cohesive Eco-Tech SaaS palette (`#14532D` Forest Green, `#16A34A` Emerald, `#D9F99D` Lime, `#F7F9F5` Canvas, paired with **Manrope** + **Inter** typography) and custom SVG brand assets in [`frontend/public/`](frontend/public/):
+- [`logo.svg`](frontend/public/logo.svg), [`logo-icon.svg`](frontend/public/logo-icon.svg), [`logo-dark.svg`](frontend/public/logo-dark.svg), and [`favicon.svg`](frontend/public/favicon.svg)
 
 | Route | Page | Capabilities |
 |---|---|---|
-| `/dashboard` | [`DashboardPage`](frontend/src/pages/DashboardPage.tsx) | Live prediction statistics, category distribution charts, recent audit feed |
+| `/dashboard` | [`DashboardPage`](frontend/src/pages/DashboardPage.tsx) | Live prediction telemetry, date-range filtering, 7-class charts, recent dual-model audit feed |
 | `/classify` | [`ClassifyPage`](frontend/src/pages/ClassifyPage.tsx) | Upload or Live Camera single-item classification, ViT vs CLIP breakdown, resin code badge, XAI toggle, label feedback |
 | `/detect` | [`DetectPage`](frontend/src/pages/DetectPage.tsx) | Multi-object interactive viewer (zoom, box/label toggle, material filter), per-object XAI rollout, resin badge, crop feedback |
-| `/history` | [`HistoryPage`](frontend/src/pages/HistoryPage.tsx) | Tabbed **Single Classifications** (CSV export, filters, modal inspection) + **Multi-Object Audits** (expandable per-item summary) |
-| `/ensemble` | [`EnsemblePage`](frontend/src/pages/EnsemblePage.tsx) | Active ViT/CLIP weight configuration, validation grid-search results, weight optimization trigger |
+| `/history` | [`HistoryPage`](frontend/src/pages/HistoryPage.tsx) | Tabbed **Single Classifications** (CSV export, filters, modal inspection) + **Multi-Object Audits** (paginated, expandable per-item summary) |
+| `/ensemble` | [`EnsemblePage`](frontend/src/pages/EnsemblePage.tsx) | Active ViT/CLIP weight configuration, Recharts weight-sweep curve, validation grid-search results, weight optimization trigger |
 | `/performance` | [`PerformancePage`](frontend/src/pages/PerformancePage.tsx) | Confusion matrix heatmaps, training curve charts, per-class precision/recall/F1 metrics |
 | `/guide` | [`DisposalGuidePage`](frontend/src/pages/DisposalGuidePage.tsx) | Searchable municipal recycling rules, prep instructions, and hazard guidance |
-| `/learning` | [`LearningPage`](frontend/src/pages/LearningPage.tsx) | Material taxonomy educational cards and sorting tips |
-| `/impact` | [`ImpactDashboardPage`](frontend/src/pages/ImpactDashboardPage.tsx) | Estimated diversion & environmental impact insights |
-| `/rewards` | [`RewardsPage`](frontend/src/pages/RewardsPage.tsx) | Eco sorting milestones and engagement tracking |
+| `/learning` | [`LearningPage`](frontend/src/pages/LearningPage.tsx) | Complete 7-class lifecycle cards (including Compostable Organics), do's & don'ts, sorting quiz |
+| `/impact` | [`ImpactDashboardPage`](frontend/src/pages/ImpactDashboardPage.tsx) | Local session diverted weight tracker with EPA WARM & DEFRA savings estimates |
+| `/rewards` | [`RewardsPage`](frontend/src/pages/RewardsPage.tsx) | Local session habit tracker, sorting streaks, challenges, and milestones |
+
+> **Screenshots:** End-to-end UI views cover the Analytics Dashboard, Single-Item Classification + XAI Heatmap, and Interactive Multi-Object Detection Box Viewer (live captures can be placed under `docs/screenshots/` once finalized).
 
 ---
 
@@ -217,7 +222,7 @@ Covers batched ViT/CLIP crop inference, SQLite persistence (`predictions`, `dete
 ### Frontend (`Vitest` + TypeScript Build)
 ```bash
 cd frontend
-npm test -- --run      # 6 test files (20 tests)
+npm test -- --run      # 7 test files (25 tests)
 npm run build          # tsc type-check + Vite production bundle
 ```
 
@@ -242,8 +247,9 @@ smart-waste-segregation/
 │   ├── tests/                   # Comprehensive offline-capable pytest suite
 │   └── requirements.txt
 ├── frontend/
+│   ├── public/                  # logo.svg, logo-icon.svg, logo-dark.svg, favicon.svg
 │   ├── src/
-│   │   ├── components/          # classify/ (DropZone+Camera, ResultCard), detect/ (AnnotatedImageViewer, ObjectCard, ObjectDetailPanel), feedback/, xai/, history/, dashboard/, performance/, guide/, learning/, rewards/, impact/, layout/, ui/
+│   │   ├── components/          # classify/ (DropZone+Camera, ResultCard), detect/, feedback/, xai/, history/, dashboard/, performance/, guide/, learning/, rewards/, impact/, layout/, ui/
 │   │   ├── pages/               # 10 routed application views
 │   │   ├── services/api.ts      # Typed Axios API client
 │   │   ├── types/index.ts       # Shared TypeScript interfaces
@@ -257,17 +263,33 @@ smart-waste-segregation/
 
 ---
 
-## ⚙️ Environment Variables
+## ⚙️ Environment Variables & Deployment
 
-| Variable | Default | Purpose |
+### Environment Templates
+- Root & Backend: [`.env.example`](.env.example), [`backend/.env.example`](backend/.env.example)
+- Frontend (Vercel): [`frontend/.env.example`](frontend/.env.example)
+
+| Variable | Default / Example | Purpose |
 |---|---|---|
-| `APP_HOST` / `APP_PORT` | `0.0.0.0` / `8000` | FastAPI server host & port |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./waste_segregation.db` | Async SQLite connection string |
+| `APP_HOST` / `PORT` / `APP_PORT` | `0.0.0.0` / `8000` | FastAPI server host & port (`PORT` injected automatically by Railway/Render) |
+| `CORS_ORIGINS` / `CORS_ORIGIN_REGEX` | `["http://localhost:5173"]` / — | JSON array or comma-separated allowed frontend origins |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./waste_segregation.db` | Async SQLite (mount persistent disk e.g. `/data/`) or `postgresql+asyncpg://...` |
 | `UPLOAD_DIR` / `FEEDBACK_DIR` | `uploads` / `backend/data/feedback` | Uploaded scans & active-learning curated crop archive |
-| `VIT_CHECKPOINT` | `google/vit-base-patch16-224-in21k` | Hugging Face ViT backbone |
-| `CLIP_CHECKPOINT` | `openai/clip-vit-base-patch32` | Hugging Face CLIP foundation checkpoint |
+| `VIT_CHECKPOINT` / `CLIP_CHECKPOINT` | `google/vit-base-patch16-224-in21k` / `openai/clip-vit-base-patch32` | Hugging Face ViT & CLIP backbones |
+| `VIT_HF_REPO_ID` / `AUTO_DOWNLOAD_MODELS` | *(unset)* / `true` | Optional Hugging Face repo containing fine-tuned `vit/best` weights for stateless cloud builds |
 | `ENSEMBLE_VIT_WEIGHT` / `ENSEMBLE_CLIP_WEIGHT` | `0.70` / `0.30` | Default ensemble fusion weights (can be tuned via `/api/ensemble/optimize`) |
 | `MAX_FILE_SIZE_MB` | `10` | Maximum allowed upload payload size |
+| `VITE_API_URL` | *(empty in dev; backend URL on Vercel)* | Production FastAPI backend URL consumed by [`frontend/src/services/api.ts`](frontend/src/services/api.ts) |
+
+### Production Deployment Architecture
+- **Frontend (Vercel)**: [`frontend/vercel.json`](frontend/vercel.json) configures SPA rewrites (`/(.*) -> /index.html`), immutable `/assets/*` cache headers, and `VITE_API_URL`.
+- **Backend (Railway / Render)**: [`backend/Dockerfile`](backend/Dockerfile), [`backend/.dockerignore`](backend/.dockerignore), [`backend/railway.toml`](backend/railway.toml), and [`render.yaml`](render.yaml) configure Python 3.11 + CPU PyTorch wheels, `/health` probe, persistent `/data` disk mount for SQLite & uploads, and optional Hugging Face Hub model checkpoint bootstrap.
+- **Database & Model Note**: Local `waste_segregation.db` and fine-tuned weights (`backend/models/vit/best/model.safetensors`, `327.34 MB`) are gitignored; stateless Git deployments require either persistent disk + `VIT_HF_REPO_ID` (for HF Hub weights download) or Docker image bundling via CLI deploy (`railway up`). Live production URLs will be added here once cloud account authorization is completed.
+
+### Limitations & Future Work
+- **Cold-Start & Memory Footprint**: Running ViT-Base (~327 MB) + CLIP-Base (~605 MB) + YOLOv8 localizer concurrently on CPU requires ~2.5–3.5 GB RAM; cloud tiers below 2 GB RAM may OOM without model offloading or managed GPU/4 GB+ instances.
+- **In-the-Wild Multi-Object Detector**: Dedicated 7-class `detection_v2/weights/best.pt` weights await GPU TACO training (`train_detector_v2.py`); until then, `/api/detect` uses the hybrid waste-seg + COCO + LAB saliency localizer.
+- **Multi-Worker Persistence**: Local SQLite supports `--workers 1`; scaling horizontally requires switching `DATABASE_URL` to managed PostgreSQL (`asyncpg`).
 
 ---
 

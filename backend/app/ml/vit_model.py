@@ -8,6 +8,7 @@ can mark the model as unavailable.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -62,6 +63,38 @@ def load_vit() -> Tuple[object, object]:
         if d.exists() and (d / "config.json").exists():
             hf_dir = d
             break
+
+    # Optional remote Hugging Face Hub download for stateless cloud builds (Render/Railway)
+    is_offline = (
+        os.getenv("HF_HUB_OFFLINE", "").lower() in {"1", "true", "yes"}
+        or os.getenv("TRANSFORMERS_OFFLINE", "").lower() in {"1", "true", "yes"}
+    )
+    if (
+        hf_dir is None
+        and not settings.VIT_FINETUNED_PATH.exists()
+        and getattr(settings, "AUTO_DOWNLOAD_MODELS", True)
+        and getattr(settings, "VIT_HF_REPO_ID", None)
+        and not is_offline
+    ):
+        try:
+            from huggingface_hub import snapshot_download
+
+            target_dir = settings.MODELS_DIR / "vit" / "best"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            sub = getattr(settings, "VIT_HF_SUBFOLDER", None)
+            patterns = [f"{sub}/*"] if sub else ["*.json", "*.safetensors", "*.bin", "*.txt"]
+            logger.info("Downloading ViT checkpoint from HF Hub repo '%s'...", settings.VIT_HF_REPO_ID)
+            dl_dir = snapshot_download(
+                repo_id=settings.VIT_HF_REPO_ID,
+                local_dir=str(target_dir),
+                allow_patterns=patterns,
+                token=getattr(settings, "HF_TOKEN", None),
+            )
+            dl_path = Path(dl_dir) / sub if sub else Path(dl_dir)
+            if (dl_path / "config.json").exists():
+                hf_dir = dl_path
+        except Exception as exc:
+            logger.warning("Failed downloading ViT checkpoint from HF Hub: %s", exc)
 
     if hf_dir is not None:
         logger.info("Loading fine-tuned ViT from HuggingFace checkpoint '%s'...", hf_dir)

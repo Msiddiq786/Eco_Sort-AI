@@ -134,7 +134,7 @@ export default function ObjectDetailPanel({ object, scanId, onClose }: Props) {
                 className="w-full h-full object-contain bg-slate-50 p-1"
               />
               <span
-                className="absolute bottom-0 inset-x-0 py-0.5 text-center text-[10px] font-bold text-white uppercase tracking-wider shadow-xs"
+                className="absolute bottom-0 inset-x-0 py-0.5 text-center text-[10px] font-bold text-white uppercase tracking-wider shadow-sm"
                 style={{ backgroundColor: `${catColor}ee` }}
               >
                 Crop #{object.object_id}
@@ -267,8 +267,9 @@ export default function ObjectDetailPanel({ object, scanId, onClose }: Props) {
         </div>
 
         {object.model_coverage?.unsupported_reason && (
-          <p className="text-[11px] text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
-            ℹ️ {object.model_coverage.unsupported_reason}
+          <p className="text-[11px] text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-200/80 flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>{object.model_coverage.unsupported_reason}</span>
           </p>
         )}
       </div>
@@ -296,7 +297,7 @@ export default function ObjectDetailPanel({ object, scanId, onClose }: Props) {
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cColor }} />
                       <span>{capitalize(cName)}</span>
                       {isTop && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
                           Selected
                         </span>
                       )}

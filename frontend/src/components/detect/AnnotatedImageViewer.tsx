@@ -173,7 +173,7 @@ export default function AnnotatedImageViewer({
           <select
             value={materialFilter}
             onChange={(e) => onFilterChange(e.target.value)}
-            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20"
+            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           >
             <option value="all">All Materials ({objects.length})</option>
             {availableMaterials.map((mat) => {
@@ -249,7 +249,7 @@ export default function AnnotatedImageViewer({
                   onMouseLeave={() => setHoveredObjectId((cur) => (cur === obj.object_id ? null : cur))}
                   className={`absolute cursor-pointer transition-opacity duration-150 ${
                     isSelected
-                      ? 'ring-3 ring-white shadow-lg'
+                      ? 'ring-2 ring-white shadow-lg'
                       : isHovered
                         ? 'brightness-110'
                         : ''

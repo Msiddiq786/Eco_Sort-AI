@@ -17,9 +17,18 @@ import type {
   XAIExplanation,
 } from '@/types';
 
+export function resolveApiBaseUrl(rawUrl = import.meta.env.VITE_API_URL): string {
+  const configured = rawUrl?.trim();
+  if (!configured) {
+    return '/api';
+  }
+  const normalized = configured.replace(/\/+$/, '');
+  return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
+}
+
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 60_000,
+  baseURL: resolveApiBaseUrl(),
+  timeout: 90_000,
 });
 
 // ── Health ────────────────────────────────────────────────────────────

@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { Crosshair, RefreshCw, AlertCircle } from 'lucide-react'
+import { Crosshair, RefreshCw, Layers, Sparkles, Scissors } from 'lucide-react'
 import DropZone from '@/components/classify/DropZone'
 import AnnotatedImageViewer from '@/components/detect/AnnotatedImageViewer'
 import ObjectCard from '@/components/detect/ObjectCard'
 import ObjectDetailPanel from '@/components/detect/ObjectDetailPanel'
 import RecyclingSummaryCard from '@/components/detect/RecyclingSummaryCard'
+import PageHeader from '@/components/ui/PageHeader'
+import StatusBanner from '@/components/ui/StatusBanner'
+import CategoryBadge from '@/components/ui/CategoryBadge'
 import { detectObjects } from '@/services/api'
-import type { DetectResponse } from '@/types'
+import { V2_WASTE_CLASSES, type DetectResponse } from '@/types'
 
 export default function DetectPage() {
   const [result, setResult] = useState<DetectResponse | null>(null)
@@ -25,7 +28,6 @@ export default function DetectPage() {
     try {
       const res = await detectObjects(file)
       setResult(res)
-      // Default to highlighting all objects cleanly; user clicks any box/card to isolate it
       setSelectedObjectId(null)
     } catch (err: unknown) {
       const msg =
@@ -39,68 +41,105 @@ export default function DetectPage() {
 
   const selectedObject = result?.objects.find((o) => o.object_id === selectedObjectId)
 
+  const displayedObjects =
+    result?.objects.filter((o) =>
+      materialFilter === 'all'
+        ? true
+        : o.material_category.toLowerCase() === materialFilter.toLowerCase()
+    ) ?? []
+
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-heading font-extrabold flex items-center gap-2.5 text-slate-900">
-              <Crosshair className="h-6 w-6 text-emerald-600" />
-              Multi-Object Waste Detection
-            </h1>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
-              Beta
-            </span>
-          </div>
-          <p className="text-muted-foreground text-sm mt-1">
-            Detect, localize and segregate multiple waste items in a single scene with per-object AI classification.
-          </p>
-        </div>
-
-        {result && (
-          <button
-            type="button"
-            onClick={() => {
-              setResult(null)
-              setSelectedObjectId(null)
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs transition-colors self-start sm:self-auto"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Upload Another Scene
-          </button>
-        )}
-      </div>
+      <PageHeader
+        eyebrow="Hybrid Localization + Batched Ensemble"
+        eyebrowIcon={Sparkles}
+        badge="V3 Beta"
+        icon={Crosshair}
+        title="Multi-Object Waste Detection"
+        subtitle="Isolate, localize, and segregate multiple waste items in a single scene with per-object ViT + CLIP scoring, resin detection, and visual XAI."
+        actions={
+          result ? (
+            <button
+              type="button"
+              onClick={() => {
+                setResult(null)
+                setSelectedObjectId(null)
+                setMaterialFilter('all')
+              }}
+              className="btn-secondary text-xs px-3.5 py-2"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Upload Another Scene</span>
+            </button>
+          ) : null
+        }
+      />
 
       {/* Upload Zone (when no result) */}
       {!result && (
-        <div className="space-y-4">
-          <DropZone onFile={handleFile} loading={loading} />
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-4 text-xs text-slate-500 leading-relaxed">
-            <strong className="text-slate-700">Supported Multi-Object Scenes:</strong> Upload photos with multiple items (e.g. bottles, cans, paper, boxes, vegetable scraps). The system automatically isolates individual bounding boxes, classifies each crop using the ViT + CLIP ensemble, and outputs itemized recycling rules.
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-8">
+            <DropZone onFile={handleFile} loading={loading} />
           </div>
+
+          <aside className="lg:col-span-4 card-eco p-5 space-y-4">
+            <h2 className="font-heading font-bold text-sm text-slate-900">
+              How Scene Auditing Works
+            </h2>
+            <ul className="space-y-3 text-xs text-slate-600">
+              <li className="flex items-start gap-2.5">
+                <span className="p-1.5 rounded-lg bg-emerald-50 text-ecosort-emerald shrink-0">
+                  <Crosshair className="h-3.5 w-3.5" />
+                </span>
+                <span>
+                  <strong className="text-slate-800 block">1. Hybrid Object Localization</strong>
+                  Combines YOLOv8 trash segmentation, COCO object detection, and residual LAB saliency.
+                </span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="p-1.5 rounded-lg bg-sky-50 text-sky-600 shrink-0">
+                  <Scissors className="h-3.5 w-3.5" />
+                </span>
+                <span>
+                  <strong className="text-slate-800 block">2. Aspect-Preserving Cropping</strong>
+                  Extracts padded item crops cleanly to prevent edge-clipping errors.
+                </span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                  <Layers className="h-3.5 w-3.5" />
+                </span>
+                <span>
+                  <strong className="text-slate-800 block">3. Batched ViT + CLIP Inference</strong>
+                  Classifies every object simultaneously and persists an audit trail to History.
+                </span>
+              </li>
+            </ul>
+
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Supported Materials
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {V2_WASTE_CLASSES.map((cls) => (
+                  <CategoryBadge key={cls} category={cls} size="sm" />
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
-      {/* Error state */}
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 flex items-start gap-3 text-rose-800 text-sm">
-          <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-bold">Detection Failed</h4>
-            <p className="text-xs text-rose-700 mt-0.5">{error}</p>
-          </div>
-        </div>
+        <StatusBanner variant="error" title="Detection Failed">
+          {error}
+        </StatusBanner>
       )}
 
-      {/* Results View */}
       {result && (
         <div className="space-y-6">
-          {/* Recycling Summary */}
           <RecyclingSummaryCard summary={result.recycling_summary} />
 
-          {/* Interactive Bounding Box Viewer */}
           <AnnotatedImageViewer
             imageBase64={result.clean_image_base64 || result.annotated_image_base64}
             imageWidth={result.image_width}
@@ -112,7 +151,6 @@ export default function DetectPage() {
             onFilterChange={(f) => setMaterialFilter(f)}
           />
 
-          {/* Selected Object Detail Panel */}
           {selectedObject && (
             <ObjectDetailPanel
               object={selectedObject}
@@ -121,17 +159,19 @@ export default function DetectPage() {
             />
           )}
 
-          {/* Detected Objects Grid */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-base font-heading font-extrabold text-slate-900">
-                Itemized Detections ({result.objects.length})
+                Itemized Detections ({displayedObjects.length}
+                {materialFilter !== 'all' ? ` of ${result.objects.length}` : ''})
               </h3>
-              <span className="text-xs text-slate-400">Click any card to inspect individual AI predictions</span>
+              <span className="text-xs text-slate-400">
+                Click any bounding box or card to inspect ViT, CLIP, resin &amp; XAI attribution
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {result.objects.map((obj) => (
+              {displayedObjects.map((obj) => (
                 <ObjectCard
                   key={obj.object_id}
                   object={obj}

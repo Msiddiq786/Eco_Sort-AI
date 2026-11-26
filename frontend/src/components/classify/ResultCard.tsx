@@ -21,6 +21,8 @@ import {
   Shield,
   Apple,
   Image as ImageIcon,
+  Target,
+  FlaskConical,
 } from 'lucide-react'
 
 interface Props {
@@ -28,7 +30,6 @@ interface Props {
   imageUrl?: string | null
 }
 
-// Category icons map
 function CategoryIcon({ category, className = 'h-8 w-8' }: { category: string; className?: string }) {
   const cat = category.toLowerCase()
   switch (cat) {
@@ -83,32 +84,25 @@ export default function ResultCard({ result, imageUrl }: Props) {
     }
   }, [result.predicted_category])
 
-  // 1. Probabilities calculation & sorting
   const rawConfidence = result.confidence
   const pctValue = rawConfidence * 100
   const isHigh = rawConfidence >= 0.7
   const isModerate = rawConfidence >= 0.4 && rawConfidence < 0.7
   const isLow = rawConfidence < 0.4 || result.is_out_of_distribution
-
-  // Ring stroke color based on confidence status
   const ringColor = isHigh ? '#16A34A' : isModerate ? '#F97316' : '#EF4444'
 
-  // SVG circular gauge parameters
   const radius = 46
   const strokeWidth = 8
   const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference - (Math.min(rawConfidence, 1.0)) * circumference
+  const strokeDashoffset = circumference - Math.min(rawConfidence, 1.0) * circumference
 
-  // Ranked probability breakdown (sorted descending)
   const rankedProbabilities = useMemo(() => {
     const entries = Object.entries(result.class_probabilities) as [string, number][]
     return entries.filter(([_, prob]) => typeof prob === 'number' && !isNaN(prob)).sort((a, b) => b[1] - a[1])
   }, [result.class_probabilities])
 
-  // ViT coverage check
   const isVitSupported = result.model_coverage?.vit_supported !== false && !result.vit_prediction?.toLowerCase().includes('not supported')
 
-  // Individual model top probabilities (if provided in API or derived)
   const vitTopProb = useMemo(() => {
     if (!isVitSupported) return 'N/A'
     if (result.vit_probabilities && result.vit_prediction) {
@@ -126,7 +120,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
     return (rawConfidence * 0.78).toFixed(2)
   }, [result, rawConfidence])
 
-  // Model agreement status (prevent false consensus when coverage is incomplete)
   const isPartialCoverage = !isVitSupported || result.model_coverage?.coverage_type === 'partial'
   const modelsAgree = Boolean(
     !isPartialCoverage &&
@@ -134,7 +127,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
     result.vit_prediction?.toLowerCase() === result.clip_prediction?.toLowerCase()
   )
 
-  // Confidence status badge content
   let statusBadge = {
     label: 'High confidence consensus',
     bgColor: 'bg-emerald-50',
@@ -168,7 +160,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
     }
   }
 
-  // Recycling recommendation & structured decision data
   const decision = result.recycling_decision
   const displayStatus = decision?.status_label ?? smartBin?.status_label ?? 'Conditionally Recyclable'
   const actionText = decision?.action ?? smartBin?.action ?? (result.recycling_recommendation?.split('.')[0] + '.')
@@ -190,11 +181,11 @@ export default function ResultCard({ result, imageUrl }: Props) {
   )
 
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-6">
-      {/* ── CARD HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div className="card-eco p-6 space-y-6 animate-fade-in">
+      {/* Card Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-sm">
+          <div className="p-2 rounded-xl bg-ecosort-emerald text-white shadow-sm">
             <Sparkles className="h-5 w-5" />
           </div>
           <h2 className="text-xl font-heading font-extrabold text-slate-900 tracking-tight">
@@ -207,14 +198,11 @@ export default function ResultCard({ result, imageUrl }: Props) {
         </div>
       </div>
 
-      {/* ── SECTION A: MAIN PREDICTION AREA ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
-        {/* Left side: Circular Gauge + Category Details */}
+      {/* Main Prediction Hero Area */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-slate-50/70 rounded-2xl p-5 border border-slate-100">
         <div className="md:col-span-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          {/* Circular Indicator */}
           <div className="relative shrink-0 flex items-center justify-center">
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 110 110">
-              {/* Background circle track */}
               <circle
                 cx="55"
                 cy="55"
@@ -223,7 +211,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
                 strokeWidth={strokeWidth}
                 fill="none"
               />
-              {/* Progress dynamic stroke */}
               <circle
                 cx="55"
                 cy="55"
@@ -247,7 +234,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
           </div>
 
-          {/* Category Info & Status */}
           <div className="space-y-2 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-3">
               <div
@@ -267,8 +253,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
               </div>
             </div>
 
-            {/* Confidence Status Badge */}
-            <div className="pt-1 flex flex-wrap items-center gap-2">
+            <div className="pt-1 flex flex-wrap justify-center sm:justify-start items-center gap-2">
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}
               >
@@ -277,6 +262,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
               </span>
               {result.resin_info?.resin_code && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-800">
+                  <FlaskConical className="h-3 w-3" />
                   {result.resin_info.resin_code}
                   {result.resin_info.recyclability_tier ? ` · ${result.resin_info.recyclability_tier}` : ''}
                 </span>
@@ -284,7 +270,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
 
             {result.resin_info && (result.resin_info.guidance || result.resin_info.hazard_flags.length > 0) && (
-              <div className="mt-2 rounded-lg border border-indigo-200/80 bg-indigo-50/70 p-2.5 text-xs text-indigo-950 space-y-1">
+              <div className="mt-2 rounded-xl border border-indigo-200/80 bg-indigo-50/70 p-3 text-xs text-indigo-950 space-y-1 text-left">
                 {result.resin_info.resin_name && (
                   <p className="font-semibold">Polymer / Screening: {result.resin_info.resin_name}</p>
                 )}
@@ -303,17 +289,16 @@ export default function ResultCard({ result, imageUrl }: Props) {
             )}
 
             {result.ood_warning && (
-              <p className="text-xs text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-200 mt-2">
+              <p className="text-xs text-amber-700 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200 mt-2">
                 {result.ood_warning}
               </p>
             )}
           </div>
         </div>
 
-        {/* Right side: Uploaded Image Preview */}
         <div className="md:col-span-4 flex items-center justify-center">
           {imageUrl ? (
-            <div className="w-full max-w-[260px] h-36 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm flex items-center justify-center">
+            <div className="w-full max-w-[260px] h-36 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-eco-sm flex items-center justify-center">
               <img
                 src={imageUrl}
                 alt="Uploaded waste preview"
@@ -331,7 +316,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
         </div>
       </div>
 
-      {/* ── CONFIDENCE-AWARE / UNKNOWN / OOD ALERT PANEL ────────────────────── */}
+      {/* Confidence Notice */}
       {needsConfidenceNotice && (
         <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col sm:flex-row items-center gap-4">
           <div className="shrink-0">
@@ -372,16 +357,16 @@ export default function ResultCard({ result, imageUrl }: Props) {
         </div>
       )}
 
-      {/* ── SECTION B: MODEL AGREEMENT ──────────────────────────────────────── */}
+      {/* Model Agreement */}
       <div className="space-y-2.5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-heading font-bold text-slate-800 flex items-center gap-1.5">
-            🎯 Model Agreement
+          <Target className="h-4 w-4 text-ecosort-emerald" />
+          <span className="text-sm font-heading font-bold text-slate-800">
+            Model Agreement
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          {/* Card 1: ViT Model */}
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5 flex flex-col justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 mb-2">
               <Cpu className="h-4 w-4 text-emerald-600" />
@@ -397,7 +382,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
           </div>
 
-          {/* Card 2: CLIP Foundation */}
           <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3.5 flex flex-col justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-blue-900 mb-2">
               <Layers className="h-4 w-4 text-blue-600" />
@@ -413,7 +397,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
           </div>
 
-          {/* Card 3: Agreement / Disagreement / Partial Coverage Banner */}
           {isPartialCoverage ? (
             result.predicted_category === 'organic' ? (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 flex flex-col justify-center">
@@ -461,9 +444,8 @@ export default function ResultCard({ result, imageUrl }: Props) {
         </div>
       </div>
 
-      {/* ── SECTION C & D: PROBABILITY BREAKDOWN & RECYCLING RECOMMENDATION ── */}
+      {/* Probability Ranking & Smart Bin Guidance */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-1">
-        {/* Left Column: Ranked Probability List (Ensemble) */}
         <div className="lg:col-span-6 rounded-2xl border border-slate-200/80 bg-white p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-heading font-bold text-slate-900 flex items-center gap-2">
@@ -489,7 +471,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
                       : 'hover:bg-slate-50 border border-transparent'
                   }`}
                 >
-                  {/* Rank circle pill */}
                   <div
                     className={`h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                       isTop
@@ -500,7 +481,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
                     {rank}
                   </div>
 
-                  {/* Category Name */}
                   <div className="w-24 shrink-0">
                     <span
                       className={`text-xs font-semibold ${
@@ -511,7 +491,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
                     </span>
                   </div>
 
-                  {/* Compact horizontal progress bar */}
                   <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700 ease-out"
@@ -522,7 +501,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
                     />
                   </div>
 
-                  {/* Percentage number */}
                   <span
                     className={`w-14 text-right text-xs font-mono font-bold shrink-0 ${
                       isTop ? 'text-slate-900' : 'text-slate-600'
@@ -536,11 +514,10 @@ export default function ResultCard({ result, imageUrl }: Props) {
           </div>
         </div>
 
-        {/* Right Column: Recycling Recommendation Card */}
         <div className="lg:col-span-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/30 p-5 space-y-3.5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-600 text-white">
+              <div className="p-1.5 rounded-lg bg-ecosort-emerald text-white">
                 <Recycle className="h-4 w-4" />
               </div>
               <h3 className="text-sm font-heading font-bold text-emerald-950">
@@ -553,7 +530,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
           </div>
 
           <div className="space-y-3 text-xs leading-relaxed text-slate-700 pt-1">
-            {/* Action */}
             <div className="flex items-start gap-2.5">
               <CheckSquare className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
@@ -562,7 +538,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
               </div>
             </div>
 
-            {/* Preparation */}
             <div className="flex items-start gap-2.5">
               <Wrench className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
@@ -571,7 +546,6 @@ export default function ResultCard({ result, imageUrl }: Props) {
               </div>
             </div>
 
-            {/* Disposal */}
             <div className="flex items-start gap-2.5">
               <Recycle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-1">
@@ -612,8 +586,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
               </div>
             )}
 
-            {/* Regional Note */}
-            <div className="flex items-start gap-2.5 pt-1 text-[11px] text-slate-500 border-t border-emerald-100">
+            <div className="flex items-start gap-2.5 pt-2 text-[11px] text-slate-500 border-t border-emerald-100">
               <Info className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
               <span>
                 <strong className="text-slate-600">Note: </strong>
@@ -624,7 +597,7 @@ export default function ResultCard({ result, imageUrl }: Props) {
         </div>
       </div>
 
-      {/* ── HUMAN FEEDBACK / ACTIVE LEARNING CORRECTION ────────────────────── */}
+      {/* Feedback Correction */}
       <FeedbackCorrection
         predictedCategory={result.predicted_category}
         predictionId={result.id}

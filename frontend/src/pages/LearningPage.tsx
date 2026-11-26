@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { BookOpen, HelpCircle, CheckCircle2, AlertOctagon, Layers } from 'lucide-react'
-import { WASTE_CLASSES } from '@/types'
+import { BookOpen, HelpCircle, CheckCircle2, AlertOctagon, Layers, GraduationCap } from 'lucide-react'
+import { V2_WASTE_CLASSES } from '@/types'
+import PageHeader from '@/components/ui/PageHeader'
 import CategoryInfoCard from '@/components/learning/CategoryInfoCard'
 import DosAndDonts from '@/components/learning/DosAndDonts'
 import CommonMistakes from '@/components/learning/CommonMistakes'
@@ -10,73 +11,62 @@ export default function LearningPage() {
   const [activeTab, setActiveTab] = useState<'categories' | 'rules' | 'mistakes' | 'quiz'>('categories')
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-primary" />
-          Eco Learning Center
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Master waste segregation rules, avoid contamination, and test your recycling expertise.
-        </p>
-      </div>
+    <div className="space-y-6 pb-10">
+      <PageHeader
+        eyebrow="Waste Literacy & Curriculum"
+        eyebrowIcon={GraduationCap}
+        icon={BookOpen}
+        title="Eco Learning Center"
+        subtitle="Master all 7 waste segregation streams, avoid wish-cycling contamination, and test your sorting knowledge."
+      />
 
       {/* Tabs */}
-      <div className="flex border-b border-border space-x-2 overflow-x-auto pb-1">
+      <div className="tab-nav max-w-full overflow-x-auto scrollbar-thin">
         <button
+          type="button"
           onClick={() => setActiveTab('categories')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 whitespace-nowrap ${
-            activeTab === 'categories'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          className={activeTab === 'categories' ? 'tab-item-active text-xs' : 'tab-item-inactive text-xs'}
         >
-          <Layers className="h-4 w-4" /> Waste Categories & Lifecycle
+          <Layers className="h-3.5 w-3.5" />
+          <span>7 Waste Categories</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('rules')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 whitespace-nowrap ${
-            activeTab === 'rules'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          className={activeTab === 'rules' ? 'tab-item-active text-xs' : 'tab-item-inactive text-xs'}
         >
-          <CheckCircle2 className="h-4 w-4" /> Do's & Don'ts
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span>Do&apos;s &amp; Don&apos;ts</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('mistakes')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 whitespace-nowrap ${
-            activeTab === 'mistakes'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          className={activeTab === 'mistakes' ? 'tab-item-active text-xs' : 'tab-item-inactive text-xs'}
         >
-          <AlertOctagon className="h-4 w-4" /> Common Mistakes
+          <AlertOctagon className="h-3.5 w-3.5" />
+          <span>Common Mistakes</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('quiz')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 whitespace-nowrap ${
-            activeTab === 'quiz'
-              ? 'border-primary text-primary bg-primary/5'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
+          className={activeTab === 'quiz' ? 'tab-item-active text-xs' : 'tab-item-inactive text-xs'}
         >
-          <HelpCircle className="h-4 w-4" /> Interactive Quiz
+          <HelpCircle className="h-3.5 w-3.5" />
+          <span>Interactive Quiz</span>
         </button>
       </div>
 
       {/* Tab Contents */}
       {activeTab === 'categories' && (
         <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Explore accepted materials, degradation timelines, and preparation guidelines across all six supported recycling streams:
+          <p className="text-xs text-slate-500">
+            Explore accepted materials, degradation timelines, and preparation guidelines across all seven EcoSort AI streams:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {WASTE_CLASSES.map(category => (
+            {V2_WASTE_CLASSES.map(category => (
               <CategoryInfoCard key={category} category={category} />
             ))}
           </div>

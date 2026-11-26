@@ -147,7 +147,7 @@ export default function MaterialSearch() {
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     activeCategory === tab.id
                       ? 'bg-emerald-700 text-white'
                       : 'bg-slate-200/80 text-slate-600'

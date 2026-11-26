@@ -152,7 +152,7 @@ export default function RecyclingInsightsSection({
   ]
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+    <div className="card-eco p-5 space-y-4">
       <div>
         <div className="flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-emerald-600" />
@@ -177,7 +177,7 @@ export default function RecyclingInsightsSection({
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <div
-                      className={`flex h-7 w-7 items-center justify-center rounded-lg text-white shadow-xs shrink-0 ${card.color}`}
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg text-white shadow-sm shrink-0 ${card.color}`}
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </div>

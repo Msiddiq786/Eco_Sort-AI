@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { capitalize, formatPct, CATEGORY_COLORS } from '@/lib'
-import { V2_WASTE_CLASSES, type HistoryItem, type WasteCategory, type WasteCategoryV2 } from '@/types'
+import { V2_WASTE_CLASSES, type HistoryItem, type WasteCategoryV2 } from '@/types'
 import { CATEGORY_DETAILS } from '@/components/learning/CategoryInfoCard'
 import FeedbackCorrection from '@/components/feedback/FeedbackCorrection'
 import { X, Layers, Sparkles } from 'lucide-react'
@@ -10,10 +11,19 @@ interface PredictionDetailModalProps {
 }
 
 export default function PredictionDetailModal({ item, onClose }: PredictionDetailModalProps) {
+  useEffect(() => {
+    if (!item) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [item, onClose])
+
   if (!item) return null
 
   const color = CATEGORY_COLORS[item.predicted_category] ?? '#16A34A'
-  const details = CATEGORY_DETAILS[item.predicted_category as WasteCategory]
+  const details = CATEGORY_DETAILS[item.predicted_category as WasteCategoryV2]
   const probs = item.class_probabilities || {}
   const dateStr = new Date(item.created_at).toLocaleString()
   const displayClasses: WasteCategoryV2[] =
@@ -22,8 +32,13 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
       : (V2_WASTE_CLASSES.filter((c: string) => c !== 'organic') as WasteCategoryV2[])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-eco-lg border border-slate-100 max-h-[90vh] overflow-y-auto animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">

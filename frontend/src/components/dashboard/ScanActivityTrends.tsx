@@ -91,7 +91,7 @@ export default function ScanActivityTrends({
   }, [trendData])
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+    <div className="card-eco p-5 space-y-4">
       {/* Header & Granularity switch */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -111,7 +111,7 @@ export default function ScanActivityTrends({
             onClick={() => setGranularity('daily')}
             className={`px-3 py-1 rounded-lg font-medium transition ${
               granularity === 'daily'
-                ? 'bg-white text-emerald-800 shadow-xs font-semibold'
+                ? 'bg-white text-emerald-800 shadow-sm font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -121,7 +121,7 @@ export default function ScanActivityTrends({
             onClick={() => setGranularity('weekly')}
             className={`px-3 py-1 rounded-lg font-medium transition ${
               granularity === 'weekly'
-                ? 'bg-white text-emerald-800 shadow-xs font-semibold'
+                ? 'bg-white text-emerald-800 shadow-sm font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -131,7 +131,7 @@ export default function ScanActivityTrends({
             onClick={() => setGranularity('monthly')}
             className={`px-3 py-1 rounded-lg font-medium transition ${
               granularity === 'monthly'
-                ? 'bg-white text-emerald-800 shadow-xs font-semibold'
+                ? 'bg-white text-emerald-800 shadow-sm font-semibold'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >

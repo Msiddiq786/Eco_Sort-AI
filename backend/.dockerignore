@@ -1,0 +1,24 @@
+# Keep Docker build context lean while allowing runtime inference checkpoints if built locally
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+tests/
+data/
+uploads/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.env
+*.env
+
+# Exclude heavy training artifacts & alternative checkpoints (preserve vit/best/model.safetensors if present)
+models/vit/latest/
+models/vit_v2/
+models/**/optimizer.pt
+models/**/scheduler.pt
+backend/
+evaluation/results/*.png

@@ -39,92 +39,84 @@ export default function AnalyticsSummaryCards({
       value: loading ? '—' : metrics.totalScans.toLocaleString(),
       subtext: 'Classification queries analyzed',
       icon: ScanLine,
-      iconColor: 'bg-emerald-600 text-white',
-      accent: 'border-l-4 border-l-emerald-600',
+      iconBadge: 'bg-emerald-50 text-ecosort-emerald border-emerald-200/70',
     },
     {
-      title: 'Most Detected Category',
+      title: 'Most Detected Class',
       value: loading
         ? '—'
         : metrics.mostDetectedCategory
         ? capitalize(metrics.mostDetectedCategory.category)
         : 'None',
       subtext: loading
-        ? ''
+        ? 'Calculating…'
         : metrics.mostDetectedCategory
         ? `${metrics.mostDetectedCategory.count} items (${metrics.mostDetectedCategory.percentage.toFixed(1)}% of total)`
-        : 'No records in range',
+        : 'No records in window',
       icon: TrendingUp,
-      iconColor: 'bg-blue-600 text-white',
-      accent: 'border-l-4 border-l-blue-600',
+      iconBadge: 'bg-sky-50 text-sky-600 border-sky-200/70',
     },
     {
       title: 'Recyclable Items',
       value: loading ? '—' : metrics.recyclableCount.toLocaleString(),
       subtext: loading
-        ? ''
-        : `${metrics.recyclablePercentage.toFixed(1)}% diverted from landfill`,
+        ? 'Calculating…'
+        : `${metrics.recyclablePercentage.toFixed(1)}% dry recyclable stream`,
       icon: Recycle,
-      iconColor: 'bg-teal-600 text-white',
-      accent: 'border-l-4 border-l-teal-600',
+      iconBadge: 'bg-teal-50 text-teal-600 border-teal-200/70',
     },
     {
       title: 'Compostable Items',
       value: loading ? '—' : metrics.compostableCount.toLocaleString(),
       subtext: loading
-        ? ''
+        ? 'Calculating…'
         : `${metrics.compostablePercentage.toFixed(1)}% organic wet waste`,
       icon: Apple,
-      iconColor: 'bg-lime-600 text-white',
-      accent: 'border-l-4 border-l-lime-600',
+      iconBadge: 'bg-lime-50 text-lime-700 border-lime-200/70',
     },
     {
-      title: 'Special Disposal / Residual',
+      title: 'Residual / Review',
       value: loading ? '—' : metrics.specialDisposalCount.toLocaleString(),
       subtext: loading
-        ? ''
-        : `${metrics.specialDisposalPercentage.toFixed(1)}% trash or verification needed`,
+        ? 'Calculating…'
+        : `${metrics.specialDisposalPercentage.toFixed(1)}% trash or review needed`,
       icon: AlertTriangle,
-      iconColor: 'bg-amber-600 text-white',
-      accent: 'border-l-4 border-l-amber-600',
+      iconBadge: 'bg-amber-50 text-amber-600 border-amber-200/70',
     },
     {
-      title: 'Average Model Confidence',
+      title: 'Mean Confidence',
       value: loading ? '—' : formatPct(metrics.averageConfidence),
-      subtext: 'Dual-model ensemble mean confidence',
+      subtext: 'Dual-model ensemble certainty',
       icon: Percent,
-      iconColor: 'bg-purple-600 text-white',
-      accent: 'border-l-4 border-l-purple-600',
+      iconBadge: 'bg-slate-100 text-slate-700 border-slate-200',
     },
   ]
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {cards.map((card, idx) => {
+      {cards.map((card) => {
         const Icon = card.icon
         return (
           <div
-            key={idx}
-            className={`rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-200 ${card.accent}`}
+            key={card.title}
+            className="stat-card hover:shadow-eco transition-shadow duration-200"
           >
             <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 {card.title}
               </span>
               <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-sm shrink-0 ${card.iconColor}`}
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border shrink-0 ${card.iconBadge}`}
               >
                 <Icon className="h-4 w-4" />
               </div>
             </div>
-            <div className="mt-1">
-              <div className="text-2xl sm:text-3xl font-heading font-extrabold text-slate-900 tracking-tight">
-                {card.value}
-              </div>
-              <p className="text-xs text-slate-500 mt-1 font-medium truncate">
-                {card.subtext}
-              </p>
+            <div className="text-2xl sm:text-3xl font-heading font-extrabold text-slate-900 tracking-tight">
+              {card.value}
             </div>
+            <p className="text-xs text-slate-500 mt-1 font-medium truncate">
+              {card.subtext}
+            </p>
           </div>
         )
       })}

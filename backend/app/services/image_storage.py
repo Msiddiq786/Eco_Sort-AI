@@ -16,6 +16,8 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
 
+from app.core.config import settings
+
 # Allowed extensions (lowercase, without leading dot)
 ALLOWED_EXTENSIONS: frozenset[str] = frozenset({"jpg", "jpeg", "png", "webp"})
 
@@ -27,7 +29,11 @@ _MAGIC: list[tuple[bytes, str]] = [
     (b"WEBP", "webp"),
 ]
 
-MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024  # Default export compatibility
+
+
+def _max_size_bytes() -> int:
+    return max(1, int(settings.MAX_FILE_SIZE_MB)) * 1024 * 1024
 
 
 def _sanitize_filename(name: str) -> str:
@@ -53,10 +59,11 @@ def validate_upload(image_bytes: bytes, original_filename: str) -> None:
     Does NOT touch the filesystem.
     """
     # 1. Size check
-    if len(image_bytes) > MAX_FILE_SIZE_BYTES:
+    max_bytes = _max_size_bytes()
+    if len(image_bytes) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File exceeds the maximum allowed size of {MAX_FILE_SIZE_BYTES // (1024*1024)} MB.",
+            detail=f"File exceeds the maximum allowed size of {max_bytes // (1024 * 1024)} MB.",
         )
 
     # 2. Extension check

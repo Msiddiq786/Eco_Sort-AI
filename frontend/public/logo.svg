@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <!-- Icon mark: leaf + lens + circuit nodes -->
+  <g>
+    <!-- Outer circle / lens ring -->
+    <circle cx="24" cy="24" r="20" fill="#14532D" opacity="0.08"/>
+    <!-- Leaf shape -->
+    <path d="M24 8 C14 8 10 18 14 28 C18 36 24 38 24 38 C24 38 30 36 34 28 C38 18 34 8 24 8Z" fill="#16A34A"/>
+    <!-- Center vein -->
+    <line x1="24" y1="38" x2="24" y2="14" stroke="#D9F99D" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Side veins -->
+    <line x1="24" y1="26" x2="18" y2="20" stroke="#D9F99D" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <line x1="24" y1="22" x2="30" y2="17" stroke="#D9F99D" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <!-- Lens overlay circle -->
+    <circle cx="24" cy="24" r="20" stroke="#14532D" stroke-width="2" fill="none"/>
+    <!-- AI circuit nodes -->
+    <circle cx="24" cy="4.5" r="2" fill="#14532D"/>
+    <circle cx="43.5" cy="24" r="2" fill="#16A34A"/>
+    <circle cx="4.5" cy="24" r="2" fill="#16A34A"/>
+    <circle cx="24" cy="43.5" r="2" fill="#14532D"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="54" y="20" font-family="Manrope, system-ui, sans-serif" font-weight="800" font-size="16" fill="#14532D" letter-spacing="-0.5">EcoSort</text>
+  <text x="54" y="38" font-family="Inter, system-ui, sans-serif" font-weight="500" font-size="10" fill="#16A34A" letter-spacing="0.5">AI  WASTE SEGREGATION</text>
+  <!-- AI badge -->
+  <rect x="128" y="8" width="22" height="16" rx="8" fill="#D9F99D"/>
+  <text x="139" y="20" font-family="Manrope, system-ui, sans-serif" font-weight="800" font-size="10" fill="#14532D" text-anchor="middle">AI</text>
+</svg>

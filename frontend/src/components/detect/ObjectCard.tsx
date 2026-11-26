@@ -19,7 +19,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
       className={`rounded-2xl border p-4 cursor-pointer transition-all duration-150 flex flex-col justify-between space-y-3 ${
         isSelected
           ? 'border-emerald-500 bg-emerald-50/40 shadow-md ring-2 ring-emerald-500/20'
-          : 'border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-xs'
+          : 'border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm'
       }`}
     >
       {/* Top Header */}
@@ -27,7 +27,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
         <div className="flex items-center gap-2.5">
           {object.crop_image_base64 ? (
             <div
-              className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border-2 shadow-xs bg-slate-100"
+              className="relative h-12 w-12 rounded-xl overflow-hidden shrink-0 border-2 shadow-sm bg-slate-100"
               style={{ borderColor: catColor }}
             >
               <img
@@ -36,7 +36,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
                 className="w-full h-full object-contain bg-slate-50 p-0.5"
               />
               <span
-                className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl-md text-[9px] font-bold text-white shadow-xs"
+                className="absolute bottom-0 right-0 px-1 py-0.5 rounded-tl-md text-[9px] font-bold text-white shadow-sm"
                 style={{ backgroundColor: catColor }}
               >
                 #{object.object_id}
@@ -44,7 +44,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
             </div>
           ) : (
             <div
-              className="h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-xs"
+              className="h-8 w-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm"
               style={{ backgroundColor: catColor }}
             >
               #{object.object_id}
@@ -63,7 +63,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
                 {capitalize(object.material_category)}
               </span>
               {object.model_coverage?.vit_supported === false && (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-100 text-amber-800">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-800">
                   CLIP V2
                 </span>
               )}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { WasteCategory } from '@/types'
+import type { WasteCategoryV2 } from '@/types'
 import { capitalize, CATEGORY_COLORS } from '@/lib'
 import {
   Package,
@@ -7,6 +7,7 @@ import {
   Hammer,
   FileText,
   Milk,
+  Apple,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react'
 
 interface CategoryDetails {
-  category: WasteCategory
+  category: WasteCategoryV2
   icon: typeof Package
   title: string
   binColor: string
@@ -28,7 +29,7 @@ interface CategoryDetails {
   preparationTip: string
 }
 
-export const CATEGORY_DETAILS: Record<WasteCategory, CategoryDetails> = {
+export const CATEGORY_DETAILS: Record<WasteCategoryV2, CategoryDetails> = {
   cardboard: {
     category: 'cardboard',
     icon: Package,
@@ -139,6 +140,28 @@ export const CATEGORY_DETAILS: Record<WasteCategory, CategoryDetails> = {
       'Sorted plastics are shredded into flakes, washed, and pelletized into recycled resin for fleece jackets, park benches, and new bottles.',
     preparationTip: 'Empty all liquids, replace caps tightly onto bottles, and never bag recyclables in black trash sacks.',
   },
+  organic: {
+    category: 'organic',
+    icon: Apple,
+    title: 'Compostable Organics',
+    binColor: 'Green Organics / Wet Bin',
+    decompositionYears: '2 - 12 weeks (aerobic compost)',
+    recyclabilityRate: '100% bio-compostable',
+    materialsIncluded: [
+      'Fruit peels, cores & vegetable trimmings',
+      'Coffee grounds, tea leaves & eggshells',
+      'Dry leaves & untreated yard trimmings',
+      'Unbleached paper coffee filters',
+    ],
+    materialsExcluded: [
+      'Plastic produce stickers (PLU labels)',
+      'Synthetic teabags sealed with polypropylene',
+      'Plastic-lined food bowls & pet waste',
+    ],
+    lifecycleSummary:
+      'Diverting wet organics to aerobic composting or anaerobic digesters recovers nutrient-rich humus and prevents potent methane emissions in landfills.',
+    preparationTip: 'Peel off plastic PLU fruit stickers and drain excess cooking oils before placing into the Green Wet Bin.',
+  },
   trash: {
     category: 'trash',
     icon: Trash2,
@@ -164,90 +187,93 @@ export const CATEGORY_DETAILS: Record<WasteCategory, CategoryDetails> = {
   },
 }
 
-export default function CategoryInfoCard({ category }: { category: WasteCategory }) {
+export default function CategoryInfoCard({ category }: { category: WasteCategoryV2 }) {
   const [expanded, setExpanded] = useState(false)
   const details = CATEGORY_DETAILS[category]
-  const color = CATEGORY_COLORS[category]
+  const color = CATEGORY_COLORS[category] ?? '#64748B'
   const Icon = details.icon
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm"
-            style={{ background: color }}
-          >
-            <Icon className="h-6 w-6" />
+    <div className="card-eco p-5 transition-all hover:shadow-eco flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm shrink-0"
+              style={{ background: color }}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-bold text-slate-900">
+                {capitalize(category)}
+              </h3>
+              <p className="text-xs text-slate-500">{details.title}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-heading text-lg font-bold text-slate-800">
-              {capitalize(category)}
-            </h3>
-            <p className="text-xs text-muted-foreground">{details.title}</p>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700 whitespace-nowrap">
+            {details.binColor}
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-2.5">
+            <span className="text-slate-500 block text-[11px]">Recyclability</span>
+            <span className="font-semibold text-slate-800">{details.recyclabilityRate}</span>
+          </div>
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-2.5">
+            <span className="text-slate-500 block text-[11px]">Decomposition</span>
+            <span className="font-semibold text-slate-800">{details.decompositionYears}</span>
           </div>
         </div>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-          {details.binColor}
-        </span>
+
+        <p className="mt-3 text-xs text-slate-600 leading-relaxed">
+          {details.lifecycleSummary}
+        </p>
+
+        {expanded && (
+          <div className="mt-4 space-y-3 pt-3 border-t border-slate-100 text-xs animate-fade-in">
+            <div>
+              <h4 className="font-semibold text-emerald-800 flex items-center gap-1.5 mb-1.5">
+                <Check className="h-4 w-4 text-emerald-600" /> Accepted Materials
+              </h4>
+              <ul className="space-y-1 pl-5 list-disc text-slate-600">
+                {details.materialsIncluded.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-rose-800 flex items-center gap-1.5 mb-1.5">
+                <AlertTriangle className="h-4 w-4 text-rose-500" /> Not Accepted (Contaminants)
+              </h4>
+              <ul className="space-y-1 pl-5 list-disc text-slate-600">
+                {details.materialsExcluded.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+              <span className="font-semibold text-emerald-900 flex items-center gap-1">
+                <RotateCcw className="h-3.5 w-3.5 text-emerald-700" /> Preparation Tip:
+              </span>
+              <p className="text-emerald-800 text-[11px] mt-1">{details.preparationTip}</p>
+            </div>
+          </div>
+        )}
       </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg bg-muted/40 p-2.5">
-          <span className="text-muted-foreground block text-[11px]">Recyclability</span>
-          <span className="font-semibold text-slate-800">{details.recyclabilityRate}</span>
-        </div>
-        <div className="rounded-lg bg-muted/40 p-2.5">
-          <span className="text-muted-foreground block text-[11px]">Decomposition</span>
-          <span className="font-semibold text-slate-800">{details.decompositionYears}</span>
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs text-slate-600 leading-relaxed">
-        {details.lifecycleSummary}
-      </p>
-
-      {expanded && (
-        <div className="mt-4 space-y-3 pt-3 border-t border-slate-100 text-xs">
-          <div>
-            <h4 className="font-semibold text-emerald-800 flex items-center gap-1.5 mb-1.5">
-              <Check className="h-4 w-4 text-emerald-600" /> Accepted Materials
-            </h4>
-            <ul className="space-y-1 pl-5 list-disc text-slate-600">
-              {details.materialsIncluded.map((item, idx) => (
-                <li key={idx}>{item}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-rose-800 flex items-center gap-1.5 mb-1.5">
-              <AlertTriangle className="h-4 w-4 text-rose-500" /> Not Accepted (Contaminants)
-            </h4>
-            <ul className="space-y-1 pl-5 list-disc text-slate-600">
-              {details.materialsExcluded.map((item, idx) => (
-                <li key={idx}>{item}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-2.5">
-            <span className="font-semibold text-emerald-900 block flex items-center gap-1">
-              <RotateCcw className="h-3.5 w-3.5 text-emerald-700" /> Preparation Tip:
-            </span>
-            <p className="text-emerald-800 text-[11px] mt-0.5">{details.preparationTip}</p>
-          </div>
-        </div>
-      )}
 
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
-        className="mt-4 w-full flex items-center justify-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors"
+        className="mt-4 w-full flex items-center justify-center gap-1 text-xs font-semibold text-ecosort-emerald hover:text-ecosort-forest py-2 rounded-xl hover:bg-ecosort-mint transition-colors"
       >
         {expanded ? (
           <>Less details <ChevronUp className="h-3.5 w-3.5" /></>
         ) : (
-          <>Recycling instructions & preparation <ChevronDown className="h-3.5 w-3.5" /></>
+          <>Recycling instructions &amp; preparation <ChevronDown className="h-3.5 w-3.5" /></>
         )}
       </button>
     </div>
