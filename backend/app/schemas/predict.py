@@ -46,6 +46,18 @@ class RecyclingDecisionSchema(BaseModel):
     regional_caveats: str
 
 
+class ResinInfoSchema(BaseModel):
+    resin_code: Optional[str] = None
+    resin_number: Optional[int] = None
+    resin_name: Optional[str] = None
+    recyclability_tier: Optional[str] = None
+    confidence: float = 0.0
+    detected_text: Optional[str] = None
+    hazard_flags: List[str] = Field(default_factory=list)
+    method: str = "clip_roi"
+    guidance: Optional[str] = None
+
+
 class PredictResponse(BaseModel):
     id: int
     filename: str
@@ -71,6 +83,7 @@ class PredictResponse(BaseModel):
     model_agreement: Optional[bool] = None
     model_coverage: Optional[ModelCoverage] = None
     xai_explanation: Optional[XAIExplanation] = None
+    resin_info: Optional[ResinInfoSchema] = None
     model_version: str
     created_at: datetime
 

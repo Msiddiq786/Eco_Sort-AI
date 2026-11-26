@@ -12,7 +12,7 @@ from typing import List, Optional
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Prediction
+from app.database.models import DetectionRecord, FeedbackCorrection, Prediction
 
 # Categories considered recyclable (not "trash")
 RECYCLABLE_CATEGORIES: frozenset[str] = frozenset(
@@ -208,4 +208,141 @@ async def get_stats(db: AsyncSession) -> dict:
         "distribution": distribution,
         "avg_confidence": round(avg_confidence, 4),
         "recyclable_count": recyclable_count,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Multi-object DetectionRecord helpers
+# ---------------------------------------------------------------------------
+
+async def create_detection_record(
+    db: AsyncSession,
+    *,
+    filename: str,
+    original_filename: str,
+    image_path: str,
+    total_objects: int,
+    category_counts: dict,
+    status_counts: dict,
+    objects_summary: list,
+    inference_time_ms: float,
+    detection_model_status: str,
+) -> DetectionRecord:
+    """Persist a multi-object detection scan summary."""
+    record = DetectionRecord(
+        filename=filename,
+        original_filename=original_filename,
+        image_path=image_path,
+        total_objects=total_objects,
+        category_counts=json.dumps(category_counts),
+        status_counts=json.dumps(status_counts),
+        objects_summary=json.dumps(objects_summary),
+        inference_time_ms=round(float(inference_time_ms), 2),
+        detection_model_status=detection_model_status,
+    )
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+    return record
+
+
+async def get_detection_records(
+    db: AsyncSession,
+    *,
+    page: int = 1,
+    page_size: int = 20,
+    search: Optional[str] = None,
+) -> tuple[List[DetectionRecord], int]:
+    """Return paginated multi-object detection scan records ordered newest-first."""
+    base_query = select(DetectionRecord)
+    count_query = select(func.count()).select_from(DetectionRecord)
+
+    if search:
+        pattern = f"%{search}%"
+        base_query = base_query.where(DetectionRecord.original_filename.ilike(pattern))
+        count_query = count_query.where(DetectionRecord.original_filename.ilike(pattern))
+
+    total_result = await db.execute(count_query)
+    total: int = total_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    rows_result = await db.execute(
+        base_query.order_by(DetectionRecord.created_at.desc(), DetectionRecord.id.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    return list(rows_result.scalars().all()), total
+
+
+async def delete_detection_record(db: AsyncSession, detection_id: int) -> bool:
+    """Delete a detection record by primary key."""
+    result = await db.execute(select(DetectionRecord).where(DetectionRecord.id == detection_id))
+    record = result.scalar_one_or_none()
+    if record is None:
+        return False
+    await db.delete(record)
+    await db.commit()
+    return True
+
+
+# ---------------------------------------------------------------------------
+# User FeedbackCorrection helpers
+# ---------------------------------------------------------------------------
+
+async def create_feedback_correction(
+    db: AsyncSession,
+    *,
+    predicted_category: str,
+    corrected_category: str,
+    prediction_id: Optional[int] = None,
+    detection_record_id: Optional[int] = None,
+    object_id: Optional[int] = None,
+    source: str = "single",
+    notes: Optional[str] = None,
+    saved_crop_path: Optional[str] = None,
+) -> FeedbackCorrection:
+    """Persist a user-verified category correction for future model retraining."""
+    record = FeedbackCorrection(
+        prediction_id=prediction_id,
+        detection_record_id=detection_record_id,
+        object_id=object_id,
+        predicted_category=predicted_category,
+        corrected_category=corrected_category,
+        source=source,
+        notes=notes,
+        saved_crop_path=saved_crop_path,
+    )
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+    return record
+
+
+async def get_feedback_summary(
+    db: AsyncSession,
+    *,
+    limit: int = 50,
+) -> dict:
+    """Return total feedback count, breakdown by corrected category, and recent rows."""
+    total_res = await db.execute(select(func.count()).select_from(FeedbackCorrection))
+    total = int(total_res.scalar_one() or 0)
+
+    dist_res = await db.execute(
+        select(
+            FeedbackCorrection.corrected_category,
+            func.count(FeedbackCorrection.id).label("cnt"),
+        ).group_by(FeedbackCorrection.corrected_category)
+    )
+    by_cat = {row.corrected_category: int(row.cnt) for row in dist_res.all()}
+
+    recent_res = await db.execute(
+        select(FeedbackCorrection)
+        .order_by(FeedbackCorrection.created_at.desc(), FeedbackCorrection.id.desc())
+        .limit(limit)
+    )
+    recent = list(recent_res.scalars().all())
+    return {
+        "total_corrections": total,
+        "by_corrected_category": by_cat,
+        "recent": recent,
     }

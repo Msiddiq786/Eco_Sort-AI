@@ -25,9 +25,8 @@ export default function DetectPage() {
     try {
       const res = await detectObjects(file)
       setResult(res)
-      if (res.objects.length > 0) {
-        setSelectedObjectId(res.objects[0].object_id)
-      }
+      // Default to highlighting all objects cleanly; user clicks any box/card to isolate it
+      setSelectedObjectId(null)
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
@@ -117,6 +116,7 @@ export default function DetectPage() {
           {selectedObject && (
             <ObjectDetailPanel
               object={selectedObject}
+              scanId={result.scan_id ?? undefined}
               onClose={() => setSelectedObjectId(null)}
             />
           )}

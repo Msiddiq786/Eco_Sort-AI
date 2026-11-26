@@ -3,6 +3,7 @@ import type { BinRecommendation, PredictResponse } from '@/types'
 import { getRecommendation } from '@/services/api'
 import { capitalize, CATEGORY_COLORS } from '@/lib/utils'
 import { ConfidenceGauge } from '@/components/xai/ConfidenceGauge'
+import FeedbackCorrection from '@/components/feedback/FeedbackCorrection'
 import {
   Recycle,
   CheckCircle2,
@@ -267,14 +268,39 @@ export default function ResultCard({ result, imageUrl }: Props) {
             </div>
 
             {/* Confidence Status Badge */}
-            <div className="pt-1">
+            <div className="pt-1 flex flex-wrap items-center gap-2">
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}
               >
                 <statusBadge.icon className="h-3.5 w-3.5" />
                 {statusBadge.label}
               </span>
+              {result.resin_info?.resin_code && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-800">
+                  {result.resin_info.resin_code}
+                  {result.resin_info.recyclability_tier ? ` · ${result.resin_info.recyclability_tier}` : ''}
+                </span>
+              )}
             </div>
+
+            {result.resin_info && (result.resin_info.guidance || result.resin_info.hazard_flags.length > 0) && (
+              <div className="mt-2 rounded-lg border border-indigo-200/80 bg-indigo-50/70 p-2.5 text-xs text-indigo-950 space-y-1">
+                {result.resin_info.resin_name && (
+                  <p className="font-semibold">Polymer / Screening: {result.resin_info.resin_name}</p>
+                )}
+                {result.resin_info.guidance && (
+                  <p className="text-[11px] text-indigo-900">{result.resin_info.guidance}</p>
+                )}
+                {result.resin_info.detected_text && (
+                  <p className="text-[11px] font-mono text-indigo-700">OCR Label: {result.resin_info.detected_text}</p>
+                )}
+                {result.resin_info.hazard_flags.length > 0 && (
+                  <p className="text-[11px] font-semibold text-rose-700">
+                    Hazard Flags: {result.resin_info.hazard_flags.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
 
             {result.ood_warning && (
               <p className="text-xs text-amber-700 bg-amber-50/80 p-2 rounded-lg border border-amber-200 mt-2">
@@ -597,6 +623,13 @@ export default function ResultCard({ result, imageUrl }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── HUMAN FEEDBACK / ACTIVE LEARNING CORRECTION ────────────────────── */}
+      <FeedbackCorrection
+        predictedCategory={result.predicted_category}
+        predictionId={result.id}
+        source="single"
+      />
     </div>
   )
 }

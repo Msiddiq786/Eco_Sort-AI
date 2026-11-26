@@ -272,3 +272,70 @@ def predict_clip_v2(
         confidence=best_conf,
         probabilities=class_probs,
     )
+
+
+def predict_clip_v2_batch(
+    model: Any,
+    processor: Any,
+    images: List[Image.Image],
+    classes: tuple[str, ...] = V2_WASTE_CLASSES,
+    use_centroid_scoring: bool = True,
+    batch_size: int = 16,
+) -> List[CLIPClassificationResultV2]:
+    """
+    Batched zero-shot 7-class waste classification using OpenAI CLIP.
+
+    Runs image feature extraction in batches against cached class text centroids
+    to amortize vision encoder overhead across multi-object detections.
+    """
+    if not images:
+        return []
+    if model is None or processor is None:
+        raise ValueError("CLIP model and processor must be initialized.")
+    if len(images) == 1:
+        return [predict_clip_v2(model, processor, images[0], classes=classes, use_centroid_scoring=use_centroid_scoring)]
+
+    if not use_centroid_scoring:
+        return [
+            predict_clip_v2(model, processor, img, classes=classes, use_centroid_scoring=False)
+            for img in images
+        ]
+
+    device = getattr(model, "device", torch.device("cpu"))
+    centroids = get_or_build_class_centroids(model, processor, classes)
+    logit_scale = (
+        model.logit_scale.exp().clamp(max=100.0)
+        if hasattr(model, "logit_scale")
+        else torch.tensor(100.0, device=device)
+    )
+
+    results: List[CLIPClassificationResultV2] = []
+    for start in range(0, len(images), max(1, batch_size)):
+        chunk = [img.convert("RGB") for img in images[start:start + max(1, batch_size)]]
+        image_inputs = processor(images=chunk, return_tensors="pt")
+        image_inputs = {k: v.to(device) for k, v in image_inputs.items()}
+
+        with torch.no_grad():
+            image_features = model.get_image_features(**image_inputs)
+            if hasattr(image_features, "pooler_output"):
+                image_features = image_features.pooler_output
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+            sim = image_features @ centroids.T  # [B, len(classes)]
+            logits = sim * logit_scale
+            probs_batch = torch.softmax(logits, dim=-1).cpu().numpy()
+
+        for row in probs_batch:
+            class_probs: Dict[str, float] = {cls: float(row[i]) for i, cls in enumerate(classes)}
+            total = sum(class_probs.values())
+            if total > 0:
+                class_probs = {c: p / total for c, p in class_probs.items()}
+            best_cls = max(class_probs, key=class_probs.get)
+            results.append(
+                CLIPClassificationResultV2(
+                    predicted_category=best_cls,
+                    confidence=class_probs[best_cls],
+                    probabilities=class_probs,
+                )
+            )
+
+    return results

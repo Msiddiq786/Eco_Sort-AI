@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import {
   History as HistoryIcon,
   Search,
@@ -7,9 +7,22 @@ import {
   Eye,
   Calendar,
   Trash2,
+  ScanSearch,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
-import { getHistory, deleteHistoryItem } from '@/services/api'
-import type { HistoryItem, PaginatedHistory } from '@/types'
+import {
+  getHistory,
+  deleteHistoryItem,
+  getDetectionHistory,
+  deleteDetectionHistoryItem,
+} from '@/services/api'
+import type {
+  DetectionHistoryItem,
+  HistoryItem,
+  PaginatedDetectionHistory,
+  PaginatedHistory,
+} from '@/types'
 import { WASTE_CLASSES, capitalize, formatPct, CATEGORY_COLORS } from '@/lib'
 import HistorySummaryCards from '@/components/history/HistorySummaryCards'
 import PredictionDetailModal from '@/components/history/PredictionDetailModal'
@@ -18,8 +31,10 @@ const PAGE_SIZE = 15
 
 type DateFilter = 'all' | 'today' | '7days' | '30days'
 type SortOrder = 'newest' | 'oldest'
+type HistoryTab = 'single' | 'detections'
 
 export default function HistoryPage() {
+  const [activeTab, setActiveTab] = useState<HistoryTab>('single')
   const [data, setData] = useState<PaginatedHistory | null>(null)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -29,6 +44,11 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null)
+
+  const [detectionData, setDetectionData] = useState<PaginatedDetectionHistory | null>(null)
+  const [detPage, setDetPage] = useState(1)
+  const [detLoading, setDetLoading] = useState(false)
+  const [expandedScanId, setExpandedScanId] = useState<number | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -43,14 +63,36 @@ export default function HistoryPage() {
       .finally(() => setLoading(false))
   }, [page, category, search])
 
+  const loadDetections = useCallback(() => {
+    setDetLoading(true)
+    getDetectionHistory({
+      page: detPage,
+      page_size: PAGE_SIZE,
+      search: search || undefined,
+    })
+      .then(setDetectionData)
+      .catch(() => setError('Failed to load multi-object audit history from backend.'))
+      .finally(() => setDetLoading(false))
+  }, [detPage, search])
+
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    loadDetections()
+  }, [loadDetections])
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this prediction record?')) return
     await deleteHistoryItem(id)
     load()
+  }
+
+  const handleDeleteDetection = async (id: number) => {
+    if (!window.confirm('Delete this multi-object detection audit record?')) return
+    await deleteDetectionHistoryItem(id)
+    loadDetections()
   }
 
   // Client-side date filtering & sorting on loaded items
@@ -122,12 +164,182 @@ export default function HistoryPage() {
 
         <button
           onClick={exportCsv}
-          disabled={!processedItems.length}
+          disabled={!processedItems.length || activeTab !== 'single'}
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition-colors self-start sm:self-auto disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5 text-emerald-600" /> Export CSV
         </button>
       </div>
+
+      {/* Mode Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('single')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+            activeTab === 'single'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <HistoryIcon className="h-3.5 w-3.5" />
+          Single Classifications ({data?.total ?? 0})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('detections')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors ${
+            activeTab === 'detections'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <ScanSearch className="h-3.5 w-3.5" />
+          Multi-Object Audits ({detectionData?.total ?? 0})
+        </button>
+      </div>
+
+      {activeTab === 'detections' ? (
+        <div className="space-y-4">
+          {/* Search for Multi-Object Audits */}
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border shadow-sm">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-background text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Search multi-object audit filename…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setDetPage(1)
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs sm:text-sm">
+                <thead className="bg-slate-50/80 border-b border-border text-slate-600">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold">Audit # / File</th>
+                    <th className="text-left px-4 py-3 font-semibold">Items</th>
+                    <th className="text-left px-4 py-3 font-semibold">Material Breakdown</th>
+                    <th className="text-left px-4 py-3 font-semibold">Latency</th>
+                    <th className="text-left px-4 py-3 font-semibold">Timestamp</th>
+                    <th className="text-right px-4 py-3 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {detLoading ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-10 text-muted-foreground">
+                        Loading multi-object audit scans…
+                      </td>
+                    </tr>
+                  ) : !detectionData?.items?.length ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-10 text-muted-foreground">
+                        No multi-object detection scans recorded yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    detectionData.items.map((scan: DetectionHistoryItem) => {
+                      const isExpanded = expandedScanId === scan.id
+                      return (
+                        <Fragment key={scan.id}>
+                          <tr className="hover:bg-slate-50/60 transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-800">
+                              <div className="flex flex-col">
+                                <span className="font-mono text-xs text-emerald-700 font-bold">
+                                  Audit #{scan.id}
+                                </span>
+                                <span className="text-xs text-slate-600 truncate max-w-[200px]" title={scan.original_filename}>
+                                  {scan.original_filename}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">
+                              {scan.total_objects} items
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {Object.entries(scan.category_counts || {}).map(([cat, count]) => (
+                                  <span
+                                    key={cat}
+                                    className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200"
+                                  >
+                                    {capitalize(cat)}: {count}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                              {scan.inference_time_ms.toFixed(0)} ms
+                            </td>
+                            <td className="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">
+                              {new Date(scan.created_at).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedScanId(isExpanded ? null : scan.id)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                                  title="Inspect Item Breakdown"
+                                >
+                                  {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                  Inspect
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteDetection(scan.id)}
+                                  className="p-1 rounded text-rose-600 hover:bg-rose-50"
+                                  title="Delete Audit Scan"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`${scan.id}-details`} className="bg-slate-50/70">
+                              <td colSpan={6} className="px-6 py-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                  {scan.objects.map((obj) => (
+                                    <div
+                                      key={obj.object_id}
+                                      className="rounded-lg border border-slate-200 bg-white p-2.5 text-xs space-y-1"
+                                    >
+                                      <div className="flex items-center justify-between font-bold text-slate-800">
+                                        <span>#{obj.object_id} {capitalize(obj.material_category)}</span>
+                                        <span className="text-emerald-700">{formatPct(obj.calibrated_confidence)}</span>
+                                      </div>
+                                      <div className="text-[11px] text-slate-500">
+                                        ViT: {obj.vit_prediction} · CLIP: {obj.clip_prediction}
+                                      </div>
+                                      {obj.resin_code && (
+                                        <span className="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold text-[10px]">
+                                          {obj.resin_code}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
 
       {/* Summary Cards */}
       <HistorySummaryCards
@@ -345,6 +557,8 @@ export default function HistoryPage() {
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
       />
+        </>
+      )}
     </div>
   )
 }

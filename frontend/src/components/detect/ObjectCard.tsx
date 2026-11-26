@@ -33,7 +33,7 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
               <img
                 src={object.crop_image_base64}
                 alt={`Crop #${object.object_id}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-slate-50 p-0.5"
               />
               <span
                 className="absolute bottom-0 right-0 px-1 py-0.2 rounded-tl-md text-[9px] font-bold text-white shadow-xs"
@@ -81,15 +81,29 @@ export default function ObjectCard({ object, isSelected, onSelect }: Props) {
         </div>
       </div>
 
-      {/* Model Predictions & Agreement */}
+      {/* Model Predictions & Independent Scores */}
       <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-100">
-        <div className="flex items-center gap-1.5 text-slate-600 truncate">
-          <Cpu className="h-3 w-3 text-emerald-600 shrink-0" />
-          <span className="truncate">ViT: <strong>{capitalize(object.vit_prediction)}</strong></span>
+        <div className="flex items-center justify-between gap-1 text-slate-600 truncate">
+          <div className="flex items-center gap-1 truncate">
+            <Cpu className="h-3 w-3 text-emerald-600 shrink-0" />
+            <span className="truncate">ViT: <strong>{capitalize(object.vit_prediction)}</strong></span>
+          </div>
+          {typeof object.vit_confidence === 'number' && object.model_coverage?.vit_supported !== false && (
+            <span className="font-mono text-[10px] text-emerald-700 shrink-0">
+              {(object.vit_confidence * 100).toFixed(0)}%
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-1.5 text-slate-600 truncate">
-          <Layers className="h-3 w-3 text-blue-600 shrink-0" />
-          <span className="truncate">CLIP: <strong>{capitalize(object.clip_prediction)}</strong></span>
+        <div className="flex items-center justify-between gap-1 text-slate-600 truncate">
+          <div className="flex items-center gap-1 truncate">
+            <Layers className="h-3 w-3 text-blue-600 shrink-0" />
+            <span className="truncate">CLIP: <strong>{capitalize(object.clip_prediction)}</strong></span>
+          </div>
+          {typeof object.clip_confidence === 'number' && (
+            <span className="font-mono text-[10px] text-blue-700 shrink-0">
+              {(object.clip_confidence * 100).toFixed(0)}%
+            </span>
+          )}
         </div>
       </div>
 

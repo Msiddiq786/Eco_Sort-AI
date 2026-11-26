@@ -1,5 +1,9 @@
-import type { DetectedObject } from '@/types'
+import { useEffect, useState } from 'react'
+import type { DetectedObject, XAIExplanation } from '@/types'
 import { capitalize, CATEGORY_COLORS } from '@/lib/utils'
+import { explainImage } from '@/services/api'
+import { XAIExplanationPanel } from '@/components/xai/XAIExplanationPanel'
+import FeedbackCorrection from '@/components/feedback/FeedbackCorrection'
 import {
   Recycle,
   AlertTriangle,
@@ -14,14 +18,52 @@ import {
   AlertCircle,
   Crop,
   BarChart3,
+  Brain,
+  Loader2,
+  FlaskConical,
 } from 'lucide-react'
 
 interface Props {
   object: DetectedObject
+  scanId?: number
   onClose: () => void
 }
 
-export default function ObjectDetailPanel({ object, onClose }: Props) {
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, b64] = dataUrl.includes(',') ? dataUrl.split(',', 2) : ['data:image/jpeg;base64', dataUrl]
+  const mimeMatch = header.match(/data:([^;]+);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new File([bytes], filename, { type: mime })
+}
+
+export default function ObjectDetailPanel({ object, scanId, onClose }: Props) {
+  const [xaiLoading, setXaiLoading] = useState(false)
+  const [xaiError, setXaiError] = useState<string | null>(null)
+  const [xaiResult, setXaiResult] = useState<XAIExplanation | null>(null)
+
+  useEffect(() => {
+    setXaiResult(null)
+    setXaiError(null)
+    setXaiLoading(false)
+  }, [object.object_id])
+
+  const handleExplainObject = async () => {
+    if (!object.crop_image_base64 || xaiLoading) return
+    setXaiLoading(true)
+    setXaiError(null)
+    try {
+      const file = dataUrlToFile(object.crop_image_base64, `object_${object.object_id}.jpg`)
+      const explanation = await explainImage(file, true)
+      setXaiResult(explanation)
+    } catch {
+      setXaiError('Could not generate XAI explanation for this object crop.')
+    } finally {
+      setXaiLoading(false)
+    }
+  }
   const cat = object.material_category.toLowerCase()
   const catColor = CATEGORY_COLORS[cat] ?? '#16A34A'
   const pctValue = object.calibrated_confidence * 100
@@ -89,7 +131,7 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
               <img
                 src={object.crop_image_base64}
                 alt={`Crop #${object.object_id}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-slate-50 p-1"
               />
               <span
                 className="absolute bottom-0 inset-x-0 py-0.5 text-center text-[10px] font-bold text-white uppercase tracking-wider shadow-xs"
@@ -146,7 +188,10 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
           </h2>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
             <span className="px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-medium">
-              Detection: {(object.detection_confidence * 100).toFixed(0)}%
+              Detection Confidence: {(object.detection_confidence * 100).toFixed(1)}%
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200 font-medium">
+              Final Ensemble: {((object.raw_ensemble_confidence ?? object.calibrated_confidence) * 100).toFixed(1)}%
             </span>
             <span className={`px-2.5 py-0.5 rounded-full font-bold ${
               !isAgree || object.recycling_status === 'UNKNOWN_REQUIRES_VERIFICATION'
@@ -186,10 +231,14 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
             <div className="flex items-center justify-between text-xs font-semibold text-emerald-900">
               <div className="flex items-center gap-1.5">
                 <Cpu className="h-4 w-4 text-emerald-600" />
-                <span>ViT Fine-Tuned (70%):</span>
+                <span>ViT Score (Fine-Tuned):</span>
               </div>
               <span className="text-[10px] font-mono text-emerald-700">
-                {object.model_coverage?.vit_supported === false ? 'No native class' : 'Active'}
+                {object.model_coverage?.vit_supported === false
+                  ? 'N/A (V1 6-class)'
+                  : typeof object.vit_confidence === 'number'
+                    ? `${(object.vit_confidence * 100).toFixed(1)}%`
+                    : 'Active'}
               </span>
             </div>
             <strong className="text-sm font-heading font-bold text-slate-900">
@@ -201,10 +250,14 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
             <div className="flex items-center justify-between text-xs font-semibold text-blue-900">
               <div className="flex items-center gap-1.5">
                 <Layers className="h-4 w-4 text-blue-600" />
-                <span>CLIP Zero-Shot (30%):</span>
+                <span>CLIP Score (Zero-Shot V2):</span>
               </div>
               <span className="text-[10px] font-mono text-blue-700">
-                {object.model_coverage?.clip_supported ? 'Active V2' : 'Active'}
+                {typeof object.clip_confidence === 'number'
+                  ? `${(object.clip_confidence * 100).toFixed(1)}%`
+                  : object.model_coverage?.clip_supported
+                    ? 'Active V2'
+                    : 'Active'}
               </span>
             </div>
             <strong className="text-sm font-heading font-bold text-slate-900">
@@ -268,7 +321,7 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
         </div>
       )}
 
-      {/* Localization & Crop details */}
+      {/* Localization & Crop details + Per-Object XAI Action */}
       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Crop className="h-4 w-4 text-slate-500" />
@@ -277,10 +330,68 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
             {object.crop_width && object.crop_height ? `${object.crop_width} × ${object.crop_height} px` : 'Auto-cropped'}
           </span>
         </div>
-        <div className="font-mono text-[11px] text-slate-500">
-          Bounding Box: [{object.bbox.x1}, {object.bbox.y1}, {object.bbox.x2}, {object.bbox.y2}]
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] text-slate-500">
+            Bounding Box: [{object.bbox.x1}, {object.bbox.y1}, {object.bbox.x2}, {object.bbox.y2}]
+          </span>
+          {object.crop_image_base64 && (
+            <button
+              type="button"
+              onClick={handleExplainObject}
+              disabled={xaiLoading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+            >
+              {xaiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
+              {xaiResult ? `Re-run Object #${object.object_id} XAI` : `Explain Object #${object.object_id} (XAI)`}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Resin Code & Hazard Screening Badge */}
+      {object.resin_info && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 text-xs text-indigo-950 space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 font-bold text-indigo-900">
+              <FlaskConical className="h-4 w-4 text-indigo-600" />
+              <span>Resin Code &amp; Hazard Screening</span>
+            </div>
+            {object.resin_info.resin_code && (
+              <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[11px] font-bold">
+                {object.resin_info.resin_code}
+              </span>
+            )}
+          </div>
+          {object.resin_info.resin_name && (
+            <p className="font-medium text-indigo-900">
+              {object.resin_info.resin_name}
+              {object.resin_info.recyclability_tier ? ` — ${object.resin_info.recyclability_tier}` : ''}
+            </p>
+          )}
+          {object.resin_info.guidance && (
+            <p className="text-[11px] text-indigo-800">{object.resin_info.guidance}</p>
+          )}
+          {object.resin_info.hazard_flags.length > 0 && (
+            <p className="text-[11px] font-bold text-rose-700">
+              Hazard Flags: {object.resin_info.hazard_flags.join(', ')}
+            </p>
+          )}
+        </div>
+      )}
+
+      {xaiError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+          {xaiError}
+        </div>
+      )}
+
+      {xaiResult && (
+        <XAIExplanationPanel
+          explanation={xaiResult}
+          originalImageSrc={object.crop_image_base64}
+          confidenceStatus={object.confidence_status}
+        />
+      )}
 
       {/* Structured recycling recommendation */}
       <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-4 space-y-2.5 text-xs text-slate-700">
@@ -331,6 +442,15 @@ export default function ObjectDetailPanel({ object, onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Per-Object User Feedback Correction */}
+      <FeedbackCorrection
+        predictedCategory={object.material_category}
+        detectionRecordId={scanId}
+        objectId={object.object_id}
+        source="multi_object"
+        imageBase64={object.crop_image_base64}
+      />
     </div>
   )
 }

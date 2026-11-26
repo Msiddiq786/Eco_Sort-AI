@@ -1,0 +1,428 @@
+{
+  "real_world_12_image_benchmark": {
+    "images": 12,
+    "total_gt": 23,
+    "total_preds": 33,
+    "localization_at_iou_0.50": {
+      "tp": 8,
+      "fp": 25,
+      "fn": 15,
+      "precision": 0.2424,
+      "recall": 0.3478,
+      "mean_iou": 0.7938,
+      "missed_object_rate": 0.6522,
+      "duplicate_detection_rate": 0.0
+    },
+    "mAP_0.50": 0.227,
+    "mAP_0.50_0.95": 0.1309,
+    "per_class_at_0.50": {
+      "cardboard": {
+        "gt_count": 5,
+        "pred_count": 2,
+        "ap_0.50": 0.2,
+        "precision": 0.5,
+        "recall": 0.2
+      },
+      "glass": {
+        "gt_count": 3,
+        "pred_count": 4,
+        "ap_0.50": 0.6667,
+        "precision": 0.5,
+        "recall": 0.6667
+      },
+      "metal": {
+        "gt_count": 6,
+        "pred_count": 8,
+        "ap_0.50": 0.1667,
+        "precision": 0.125,
+        "recall": 0.1667
+      },
+      "plastic": {
+        "gt_count": 7,
+        "pred_count": 12,
+        "ap_0.50": 0.3286,
+        "precision": 0.3333,
+        "recall": 0.5714
+      },
+      "organic": {
+        "gt_count": 1,
+        "pred_count": 0,
+        "ap_0.50": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "trash": {
+        "gt_count": 1,
+        "pred_count": 5,
+        "ap_0.50": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      }
+    },
+    "confusion_matrix_classes": [
+      "cardboard",
+      "glass",
+      "metal",
+      "paper",
+      "plastic",
+      "organic",
+      "trash"
+    ],
+    "confusion_matrix_matched": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "diagnostic_cases_a_and_b_detection": {
+    "images": 2,
+    "total_gt": 43,
+    "total_preds": 42,
+    "localization_at_iou_0.50": {
+      "tp": 38,
+      "fp": 4,
+      "fn": 5,
+      "precision": 0.9048,
+      "recall": 0.8837,
+      "mean_iou": 0.9366,
+      "missed_object_rate": 0.1163,
+      "duplicate_detection_rate": 0.0
+    },
+    "mAP_0.50": 0.6063,
+    "mAP_0.50_0.95": 0.547,
+    "per_class_at_0.50": {
+      "cardboard": {
+        "gt_count": 4,
+        "pred_count": 7,
+        "ap_0.50": 0.75,
+        "precision": 0.4286,
+        "recall": 0.75
+      },
+      "glass": {
+        "gt_count": 4,
+        "pred_count": 4,
+        "ap_0.50": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "metal": {
+        "gt_count": 15,
+        "pred_count": 16,
+        "ap_0.50": 0.9375,
+        "precision": 0.9375,
+        "recall": 1.0
+      },
+      "paper": {
+        "gt_count": 6,
+        "pred_count": 2,
+        "ap_0.50": 0.3333,
+        "precision": 1.0,
+        "recall": 0.3333
+      },
+      "plastic": {
+        "gt_count": 10,
+        "pred_count": 10,
+        "ap_0.50": 0.5567,
+        "precision": 0.7,
+        "recall": 0.7
+      },
+      "organic": {
+        "gt_count": 3,
+        "pred_count": 2,
+        "ap_0.50": 0.6667,
+        "precision": 1.0,
+        "recall": 0.6667
+      },
+      "trash": {
+        "gt_count": 1,
+        "pred_count": 1,
+        "ap_0.50": 0.0,
+        "precision": 0.0,
+        "recall": 0.0
+      }
+    },
+    "confusion_matrix_classes": [
+      "cardboard",
+      "glass",
+      "metal",
+      "paper",
+      "plastic",
+      "organic",
+      "trash"
+    ],
+    "confusion_matrix_matched": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        1,
+        2,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    ]
+  },
+  "diagnostic_cases_a_and_b_crop_classification": {
+    "vit": {
+      "samples": 43,
+      "accuracy": 0.7907,
+      "macro_f1": 0.5661,
+      "per_class": {
+        "cardboard": {
+          "support": 4,
+          "precision": 0.6667,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "glass": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "metal": {
+          "support": 15,
+          "precision": 0.9375,
+          "recall": 1.0,
+          "f1": 0.9677
+        },
+        "paper": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 0.1667,
+          "f1": 0.2857
+        },
+        "plastic": {
+          "support": 10,
+          "precision": 0.8333,
+          "recall": 1.0,
+          "f1": 0.9091
+        },
+        "organic": {
+          "support": 3,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "trash": {
+          "support": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      }
+    },
+    "clip": {
+      "samples": 43,
+      "accuracy": 0.907,
+      "macro_f1": 0.8528,
+      "per_class": {
+        "cardboard": {
+          "support": 4,
+          "precision": 0.6667,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "glass": {
+          "support": 4,
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.8889
+        },
+        "metal": {
+          "support": 15,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "paper": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6667
+        },
+        "plastic": {
+          "support": 10,
+          "precision": 1.0,
+          "recall": 0.9,
+          "f1": 0.9474
+        },
+        "organic": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "trash": {
+          "support": 1,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6667
+        }
+      }
+    },
+    "ensemble": {
+      "samples": 43,
+      "accuracy": 0.8837,
+      "macro_f1": 0.7457,
+      "per_class": {
+        "cardboard": {
+          "support": 4,
+          "precision": 0.6667,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "glass": {
+          "support": 4,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "metal": {
+          "support": 15,
+          "precision": 0.9375,
+          "recall": 1.0,
+          "f1": 0.9677
+        },
+        "paper": {
+          "support": 6,
+          "precision": 1.0,
+          "recall": 0.3333,
+          "f1": 0.5
+        },
+        "plastic": {
+          "support": 10,
+          "precision": 0.9091,
+          "recall": 1.0,
+          "f1": 0.9524
+        },
+        "organic": {
+          "support": 3,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "trash": {
+          "support": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      }
+    }
+  }
+}

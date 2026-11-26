@@ -117,3 +117,34 @@ def predict_vit(
     outputs = model(**inputs)
     probs = torch.softmax(outputs.logits, dim=-1).squeeze().cpu().tolist()
     return {cls: round(prob, 6) for cls, prob in zip(settings.WASTE_CLASSES, probs)}
+
+
+@no_grad()
+def predict_vit_batch(
+    model: object,
+    processor: object,
+    pil_images: list,
+) -> list[Dict[str, float]]:
+    """
+    Run batched ViT inference across multiple PIL crops in a single forward pass.
+
+    Returns:
+        List of dicts mapping each waste class to its softmax probability.
+    """
+    if not pil_images:
+        return []
+    if not HAS_TORCH or model is None or processor is None:
+        raise RuntimeError("ViT model runtime is not initialized.")
+    if len(pil_images) == 1:
+        return [predict_vit(model, processor, pil_images[0])]
+
+    inputs = processor(images=list(pil_images), return_tensors="pt").to(DEVICE)
+    outputs = model(**inputs)
+    probs_tensor = torch.softmax(outputs.logits, dim=-1).cpu()
+    if probs_tensor.ndim == 1:
+        probs_tensor = probs_tensor.unsqueeze(0)
+
+    return [
+        {cls: round(float(prob), 6) for cls, prob in zip(settings.WASTE_CLASSES, row)}
+        for row in probs_tensor.tolist()
+    ]

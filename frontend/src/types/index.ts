@@ -39,6 +39,18 @@ export interface RecyclingDecision {
   regional_caveats: string;
 }
 
+export interface ResinInfo {
+  resin_code?: string | null;
+  resin_number?: number | null;
+  resin_name?: string | null;
+  recyclability_tier?: string | null;
+  confidence: number;
+  detected_text?: string | null;
+  hazard_flags: string[];
+  method: string;
+  guidance?: string | null;
+}
+
 export interface PredictResponse {
   id: number;
   filename: string;
@@ -63,6 +75,7 @@ export interface PredictResponse {
   model_agreement?: boolean | null;
   model_coverage?: ModelCoverage | null;
   xai_explanation?: XAIExplanation | null;
+  resin_info?: ResinInfo | null;
   model_version: string;
   created_at: string;
 }
@@ -72,6 +85,10 @@ export interface BoundingBox {
   y1: number;
   x2: number;
   y2: number;
+  nx1?: number;
+  ny1?: number;
+  nx2?: number;
+  ny2?: number;
   x?: number;
   y?: number;
   width?: number;
@@ -95,13 +112,19 @@ export interface DetectedObject {
   material_category: string;
   vit_prediction: string;
   clip_prediction: string;
+  vit_confidence?: number | null;
+  clip_confidence?: number | null;
+  raw_ensemble_confidence?: number | null;
   final_category: string;
   class_probabilities: Record<string, number>;
+  vit_probabilities?: Record<string, number> | null;
+  clip_probabilities?: Record<string, number> | null;
   calibrated_confidence: number;
   confidence_status: string;
   is_out_of_distribution?: boolean;
   model_agreement?: boolean;
   model_coverage?: ModelCoverage;
+  detector_source?: string | null;
   crop_width?: number;
   crop_height?: number;
   crop_image_base64?: string;
@@ -109,6 +132,7 @@ export interface DetectedObject {
   disposal_recommendation?: string;
   preparation_steps?: string[];
   recycling_decision: RecyclingDecision;
+  resin_info?: ResinInfo | null;
   category?: string;
   classification_confidence?: number;
   probabilities?: Record<string, number>;
@@ -129,6 +153,7 @@ export interface RecyclingSummary {
 }
 
 export interface DetectResponse {
+  scan_id?: number | null;
   image_width: number;
   image_height: number;
   total_objects: number;
@@ -430,4 +455,76 @@ export interface BinRecommendation {
 
 export interface AllRecommendationsResponse {
   categories: BinRecommendation[];
+}
+
+export interface DetectionObjectSummary {
+  object_id: number;
+  material_category: string;
+  calibrated_confidence: number;
+  vit_prediction: string;
+  clip_prediction: string;
+  recycling_status: string;
+  model_agreement: boolean;
+  resin_code?: string | null;
+}
+
+export interface DetectionHistoryItem {
+  id: number;
+  filename: string;
+  original_filename: string;
+  image_path: string;
+  total_objects: number;
+  category_counts: Record<string, number>;
+  status_counts: Record<string, number>;
+  objects: DetectionObjectSummary[];
+  inference_time_ms: number;
+  detection_model_status: string;
+  created_at: string;
+}
+
+export interface PaginatedDetectionHistory {
+  items: DetectionHistoryItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface FeedbackRequest {
+  predicted_category: string;
+  corrected_category: string;
+  prediction_id?: number;
+  detection_record_id?: number;
+  object_id?: number;
+  source?: 'single' | 'multi_object' | 'history';
+  notes?: string;
+  image_base64?: string | null;
+}
+
+export interface FeedbackResponse {
+  id: number;
+  predicted_category: string;
+  corrected_category: string;
+  source: string;
+  saved_crop_path?: string | null;
+  created_at: string;
+  message: string;
+}
+
+export interface FeedbackListItem {
+  id: number;
+  prediction_id?: number | null;
+  detection_record_id?: number | null;
+  object_id?: number | null;
+  predicted_category: string;
+  corrected_category: string;
+  source: string;
+  notes?: string | null;
+  saved_crop_path?: string | null;
+  created_at: string;
+}
+
+export interface FeedbackStatsResponse {
+  total_corrections: number;
+  by_corrected_category: Record<string, number>;
+  recent: FeedbackListItem[];
 }

@@ -54,6 +54,7 @@ class Settings(BaseSettings):
 
     # ── File upload ───────────────────────────────────────
     UPLOAD_DIR: Path = Path("uploads")
+    FEEDBACK_DIR: Path = Path(__file__).resolve().parent.parent.parent / "data" / "feedback"
     MAX_FILE_SIZE_MB: int = 10
     ALLOWED_EXTENSIONS: List[str] = ["jpg", "jpeg", "png", "webp", "bmp"]
 

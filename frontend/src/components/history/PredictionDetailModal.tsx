@@ -1,6 +1,7 @@
 import { capitalize, formatPct, CATEGORY_COLORS } from '@/lib'
 import { V2_WASTE_CLASSES, type HistoryItem, type WasteCategory, type WasteCategoryV2 } from '@/types'
 import { CATEGORY_DETAILS } from '@/components/learning/CategoryInfoCard'
+import FeedbackCorrection from '@/components/feedback/FeedbackCorrection'
 import { X, Layers, Sparkles } from 'lucide-react'
 
 interface PredictionDetailModalProps {
@@ -142,6 +143,12 @@ export default function PredictionDetailModal({ item, onClose }: PredictionDetai
               </p>
             </div>
           ) : null}
+
+          <FeedbackCorrection
+            predictedCategory={item.predicted_category}
+            predictionId={item.id}
+            source="history"
+          />
 
           <div className="pt-2 flex justify-end">
             <button

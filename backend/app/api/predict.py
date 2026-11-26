@@ -23,8 +23,10 @@ from app.schemas.predict import (
     ModelCoverage,
     PredictResponse,
     RecyclingDecisionSchema,
+    ResinInfoSchema,
     XAIExplanation,
 )
+from app.ml.resin_ocr import analyze_resin_and_hazards
 from app.services.ensemble_optimizer import load_ensemble_config
 from app.services.image_storage import save_upload, validate_upload
 from app.services.prediction_store import create_prediction
@@ -324,6 +326,21 @@ async def predict_image(
         except Exception as xai_exc:
             logger.warning("XAI explanation failed (non-fatal): %s", xai_exc)
 
+    # ── 11b. Optional Resin Code & Hazard Analysis ───────────────────────────
+    resin_info_obj: Optional[ResinInfoSchema] = None
+    if final_cat in ("plastic", "trash", "metal"):
+        try:
+            resin_dict = analyze_resin_and_hazards(
+                pil_image=pil_image,
+                category=final_cat,
+                clip_model=registry.clip_model if registry.clip_loaded else None,
+                clip_processor=registry.clip_processor if registry.clip_loaded else None,
+            )
+            if resin_dict:
+                resin_info_obj = ResinInfoSchema(**resin_dict)
+        except Exception as resin_exc:
+            logger.warning("Resin/hazard analysis failed (non-fatal): %s", resin_exc)
+
     return PredictResponse(
         id=record.id,
         filename=safe_name,
@@ -349,6 +366,7 @@ async def predict_image(
         model_agreement=models_agree,
         model_coverage=coverage_obj,
         xai_explanation=xai_explanation_obj,
+        resin_info=resin_info_obj,
         model_version=settings.MODEL_VERSION,
         created_at=record.created_at,
     )

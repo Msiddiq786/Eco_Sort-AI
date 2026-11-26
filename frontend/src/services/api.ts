@@ -4,8 +4,12 @@ import type {
   BinRecommendation,
   EnsembleConfig,
   EnsembleEvaluation,
+  FeedbackRequest,
+  FeedbackResponse,
+  FeedbackStatsResponse,
   HealthResponse,
   ModelInfoResponse,
+  PaginatedDetectionHistory,
   PaginatedHistory,
   PredictResponse,
   StatsResponse,
@@ -77,6 +81,22 @@ export const getAllHistory = async (): Promise<import('@/types').HistoryItem[]> 
 
 export const deleteHistoryItem = (id: number) =>
   api.delete(`/history/${id}`);
+
+export const getDetectionHistory = (params?: {
+  page?: number;
+  page_size?: number;
+  search?: string;
+}) => api.get<PaginatedDetectionHistory>('/history/detections', { params }).then(r => r.data);
+
+export const deleteDetectionHistoryItem = (id: number) =>
+  api.delete(`/history/detections/${id}`);
+
+// ── Feedback (Active Learning) ────────────────────────────────────────
+export const submitFeedback = (payload: FeedbackRequest) =>
+  api.post<FeedbackResponse>('/feedback', payload).then(r => r.data);
+
+export const getFeedbackStats = (limit = 50) =>
+  api.get<FeedbackStatsResponse>('/feedback', { params: { limit } }).then(r => r.data);
 
 // ── XAI ───────────────────────────────────────────────────────────────
 export const getExplanation = (predictionId: number, includeHeatmap = true) =>

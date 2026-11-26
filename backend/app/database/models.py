@@ -76,3 +76,53 @@ class XAIResult(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class DetectionRecord(Base):
+    """Stores persisted multi-object /api/detect scan summaries for History & Audits."""
+
+    __tablename__ = "detection_records"
+    __table_args__ = (
+        Index("ix_detection_records_created_at", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    total_objects: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    category_counts: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    status_counts: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    objects_summary: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    inference_time_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    detection_model_status: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class FeedbackCorrection(Base):
+    """Stores user-confirmed category corrections for active-learning curation."""
+
+    __tablename__ = "feedback_corrections"
+    __table_args__ = (
+        Index("ix_feedback_corrected_category", "corrected_category"),
+        Index("ix_feedback_created_at", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    prediction_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("predictions.id", ondelete="SET NULL"), nullable=True
+    )
+    detection_record_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("detection_records.id", ondelete="SET NULL"), nullable=True
+    )
+    object_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    predicted_category: Mapped[str] = mapped_column(String(50), nullable=False)
+    corrected_category: Mapped[str] = mapped_column(String(50), nullable=False)
+    source: Mapped[str] = mapped_column(String(40), nullable=False, default="single")
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    saved_crop_path: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

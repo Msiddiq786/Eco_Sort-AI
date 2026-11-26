@@ -6,14 +6,18 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, computed_field
 
-from app.schemas.predict import RecyclingDecisionSchema
+from app.schemas.predict import RecyclingDecisionSchema, ResinInfoSchema
 
 
 class BoundingBox(BaseModel):
-    x1: float = Field(..., description="Left coordinate")
-    y1: float = Field(..., description="Top coordinate")
-    x2: float = Field(..., description="Right coordinate")
-    y2: float = Field(..., description="Bottom coordinate")
+    x1: float = Field(..., description="Left coordinate (pixels)")
+    y1: float = Field(..., description="Top coordinate (pixels)")
+    x2: float = Field(..., description="Right coordinate (pixels)")
+    y2: float = Field(..., description="Bottom coordinate (pixels)")
+    nx1: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Normalized left coordinate [0, 1]")
+    ny1: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Normalized top coordinate [0, 1]")
+    nx2: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Normalized right coordinate [0, 1]")
+    ny2: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Normalized bottom coordinate [0, 1]")
 
     @computed_field
     @property
@@ -53,13 +57,19 @@ class DetectedObject(BaseModel):
     material_category: str
     vit_prediction: str
     clip_prediction: str
+    vit_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    clip_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    raw_ensemble_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     final_category: str
     class_probabilities: Dict[str, float]
+    vit_probabilities: Optional[Dict[str, float]] = None
+    clip_probabilities: Optional[Dict[str, float]] = None
     calibrated_confidence: float = Field(..., ge=0.0, le=1.0)
     confidence_status: str
     is_out_of_distribution: bool = False
     model_agreement: bool = True
     model_coverage: Optional[ModelCoverage] = None
+    detector_source: Optional[str] = None
     crop_width: Optional[int] = None
     crop_height: Optional[int] = None
     crop_image_base64: Optional[str] = None
@@ -67,6 +77,7 @@ class DetectedObject(BaseModel):
     disposal_recommendation: str
     preparation_steps: List[str]
     recycling_decision: RecyclingDecisionSchema
+    resin_info: Optional[ResinInfoSchema] = None
 
     @computed_field
     @property
@@ -105,6 +116,7 @@ class RecyclingSummary(BaseModel):
 
 
 class DetectResponse(BaseModel):
+    scan_id: Optional[int] = None
     image_width: int
     image_height: int
     total_objects: int
