@@ -19,6 +19,8 @@ services:
         value: sqlite+aiosqlite:////data/waste_segregation.db
       - key: UPLOAD_DIR
         value: /data/uploads
+      - key: FEEDBACK_DIR
+        value: /data/feedback
       - key: AUTO_DOWNLOAD_MODELS
         value: "true"
       - key: VIT_HF_REPO_ID

@@ -19,7 +19,7 @@ from fastapi import HTTPException, UploadFile, status
 from app.core.config import settings
 
 # Allowed extensions (lowercase, without leading dot)
-ALLOWED_EXTENSIONS: frozenset[str] = frozenset({"jpg", "jpeg", "png", "webp"})
+ALLOWED_EXTENSIONS: frozenset[str] = frozenset({"jpg", "jpeg", "png", "webp", "bmp"})
 
 # Magic byte signatures for image types we accept
 _MAGIC: list[tuple[bytes, str]] = [
@@ -27,6 +27,7 @@ _MAGIC: list[tuple[bytes, str]] = [
     (b"\x89PNG\r\n\x1a\n", "png"),
     (b"RIFF", "webp"),          # RIFF....WEBP — checked further below
     (b"WEBP", "webp"),
+    (b"BM", "bmp"),
 ]
 
 MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024  # Default export compatibility

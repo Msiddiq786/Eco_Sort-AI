@@ -54,3 +54,21 @@ def test_image_storage_respects_dynamic_max_size(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         validate_upload(oversized, "oversized.jpg")
     assert exc.value.status_code == 400
+
+
+def test_cors_allows_configured_origin_and_preflight():
+    from app.core.config import settings
+    from app.main import create_app
+
+    origin = settings.CORS_ORIGINS[0] if settings.CORS_ORIGINS else "http://localhost:5173"
+    app = create_app()
+    with TestClient(app) as client:
+        resp = client.options(
+            "/api/health",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.headers.get("access-control-allow-origin") == origin

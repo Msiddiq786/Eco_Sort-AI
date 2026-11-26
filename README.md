@@ -217,7 +217,7 @@ python backend/training/train_detector_v2.py --epochs 50 --imgsz 640 --min-map50
 # Run full suite (excluding the legacy epoch-9 resume metadata test)
 backend\.venv\Scripts\python.exe -m pytest backend/tests/ --ignore=backend/tests/test_vit_resume.py -q
 ```
-Covers batched ViT/CLIP crop inference, SQLite persistence (`predictions`, `detection_records`, `feedback_corrections`), API endpoints, calibration/ensemble math, XAI attention rollout, Smart Bin rules, resin/hazard screening, and COCO-to-YOLO dataset utilities (`175 passed`).
+Covers batched ViT/CLIP crop inference, production config/CORS/upload checks, SQLite persistence (`predictions`, `detection_records`, `feedback_corrections`), API endpoints, calibration/ensemble math, XAI attention rollout, Smart Bin rules, resin/hazard screening, and COCO-to-YOLO dataset utilities (`179 passed`).
 
 ### Frontend (`Vitest` + TypeScript Build)
 ```bash
@@ -283,7 +283,7 @@ smart-waste-segregation/
 
 ### Production Deployment Architecture
 - **Frontend (Vercel)**: [`frontend/vercel.json`](frontend/vercel.json) configures SPA rewrites (`/(.*) -> /index.html`), immutable `/assets/*` cache headers, and `VITE_API_URL`.
-- **Backend (Railway / Render)**: [`backend/Dockerfile`](backend/Dockerfile), [`backend/.dockerignore`](backend/.dockerignore), [`backend/railway.toml`](backend/railway.toml), and [`render.yaml`](render.yaml) configure Python 3.11 + CPU PyTorch wheels, `/health` probe, persistent `/data` disk mount for SQLite & uploads, and optional Hugging Face Hub model checkpoint bootstrap.
+- **Backend (Railway / Render)**: [`backend/Dockerfile`](backend/Dockerfile), [`backend/.dockerignore`](backend/.dockerignore), [`backend/railway.toml`](backend/railway.toml), and [`render.yaml`](render.yaml) configure Python 3.11 + CPU PyTorch wheels + pre-cached CLIP/YOLOv8s, `/health` probe, persistent `/data` disk mount for SQLite, uploads & active-learning feedback (`/data/feedback`), and optional Hugging Face Hub model checkpoint bootstrap.
 - **Database & Model Note**: Local `waste_segregation.db` and fine-tuned weights (`backend/models/vit/best/model.safetensors`, `327.34 MB`) are gitignored; stateless Git deployments require either persistent disk + `VIT_HF_REPO_ID` (for HF Hub weights download) or Docker image bundling via CLI deploy (`railway up`). Live production URLs will be added here once cloud account authorization is completed.
 
 ### Limitations & Future Work

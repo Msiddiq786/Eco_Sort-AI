@@ -165,18 +165,40 @@ def _find_cached_trash_seg_path() -> Optional[Path]:
 
 
 def _find_coco_yolo_path() -> Optional[Path]:
-    """Locate yolov8s.pt or yolov8n.pt regardless of CWD."""
+    """Locate yolov8s.pt or yolov8n.pt regardless of CWD, with optional online download."""
+    from app.core.config import settings
+
     candidates = [
         _REPO_ROOT / "yolov8s.pt",
         _BACKEND_DIR / "yolov8s.pt",
+        settings.MODELS_DIR / "yolov8s.pt",
         Path("yolov8s.pt"),
         _REPO_ROOT / "yolov8n.pt",
         _BACKEND_DIR / "yolov8n.pt",
+        settings.MODELS_DIR / "yolov8n.pt",
         Path("yolov8n.pt"),
     ]
     for p in candidates:
         if p.exists() and p.is_file() and p.stat().st_size > 1_000_000:
             return p
+
+    is_offline = (
+        os.getenv("HF_HUB_OFFLINE", "").lower() in {"1", "true", "yes"}
+        or os.getenv("TRANSFORMERS_OFFLINE", "").lower() in {"1", "true", "yes"}
+    )
+    if not is_offline and getattr(settings, "AUTO_DOWNLOAD_MODELS", True):
+        try:
+            from ultralytics import YOLO
+
+            target = settings.MODELS_DIR / "yolov8s.pt"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            model = YOLO(str(target))
+            if target.exists() and target.stat().st_size > 1_000_000:
+                key = str(target.resolve())
+                _YOLO_MODEL_CACHE[key] = model
+                return target
+        except Exception as exc:
+            logger.debug("Optional COCO YOLO download skipped/failed: %s", exc)
     return None
 
 

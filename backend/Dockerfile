@@ -28,8 +28,9 @@ COPY . .
 # Create runtime directories for uploads, SQLite fallback, and feedback archive
 RUN mkdir -p /app/uploads /app/models /app/data/feedback /app/.cache/huggingface
 
-# Pre-cache CLIP foundation backbone during image build to avoid cold-start timeout
+# Pre-cache CLIP backbone & COCO YOLOv8s during image build to avoid cold-start timeout
 RUN python -c "from transformers import CLIPModel, CLIPProcessor; CLIPModel.from_pretrained('openai/clip-vit-base-patch32'); CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')" || true
+RUN python -c "from ultralytics import YOLO; YOLO('yolov8s.pt')" || true
 
 EXPOSE 8000
 

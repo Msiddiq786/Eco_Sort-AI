@@ -29,12 +29,19 @@ os.environ["HF_HUB_OFFLINE"] = "1"
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_test_db():
-    """Remove the temporary test database after the whole session finishes."""
+    """Dispose SQLAlchemy engine and remove the temporary test database after session ends."""
     yield
-    # On Windows the aiosqlite engine may still hold a file handle at teardown.
-    # Suppress the PermissionError rather than failing the test session.
+    try:
+        import asyncio
+        from app.database.connection import engine
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(engine.dispose())
+        loop.close()
+    except Exception:
+        pass
     if _TEST_DB.exists():
         try:
             _TEST_DB.unlink()
         except PermissionError:
-            pass  # File still locked by background engine; will be cleaned next run.
+            pass

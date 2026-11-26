@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Initialize DB tables and load ML models once at startup; release on shutdown."""
     settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    settings.FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
+    settings.MODELS_DIR.mkdir(parents=True, exist_ok=True)
     await init_db()
     logger.info("Database initialized successfully.")
     model_registry.load()
